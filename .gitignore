@@ -1,0 +1,7 @@
+
+/venv
+build.bat
+build_debug.bat
+steamdl_latest.spec
+/dist
+steamdl_debug.spec
