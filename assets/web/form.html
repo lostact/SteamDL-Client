@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="fa">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Token Form</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="vazirmtn/Vazirmatn-font-face.css" rel="stylesheet">
+  <script src="jquery.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      background: #fefce8;
+      font-family: "Vazirmatn", sans-serif;
+      line-height: normal;
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      /*min-height: 100vh;*/
+      direction: rtl;
+      font-size: 1.25em;
+      font-weight: 900;
+      margin-bottom: 0.8rem;
+    }
+    .flex-column
+    {
+      display: flex;
+      flex-direction: column;
+    }
+    textarea {
+      width: 100%;
+      padding: 12px 20px;
+      margin: 8px 0;
+      display: inline-block;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      text-align: left;
+    }
+
+    input[type=submit] {
+      width: 75px;
+      background-color: #4CAF50;
+      color: white;
+      padding: 14px 20px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: "Vazirmatn", sans-serif;
+      font-size: 0.75em;
+      font-weight: 900;
+    }
+
+    input[type=submit]:hover {
+      background-color: #45a049;
+    }
+
+    .flex-column
+    {
+      position: relative;
+      border: 2px solid #000;
+      border-radius: 1rem;
+      background: #fff;
+      width: 20rem;
+      margin-top: 4.5rem;
+      margin-bottom: 2rem;
+    }
+    form {
+      background: #fef9c3;
+      padding: 1rem;
+      text-align: center;
+      border-radius: 1rem;
+      overflow: hidden;
+    }
+  .btn-close {
+    margin: 0;
+    border: 0;
+    padding: 0;
+    background: red;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 150ms;
+    position: absolute;
+    top: 10px;
+    right:10px;
+  }
+  .btn-close .icon-cross {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    position: relative;
+    width: 17px;
+    height: 30px;
+  }
+  .btn-close .icon-cross:before, .btn-close .icon-cross:after {
+    content: "";
+    position: absolute;
+    top: 13px;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: #fff;
+    border-radius: 4px;
+  }
+  .btn-close .icon-cross:before {
+    transform: rotate(45deg);
+  }
+  .btn-close .icon-cross:after {
+    transform: rotate(-45deg);
+  }
+  .btn-close .icon-cross span {
+    display: block;
+  }
+  .btn-close:hover, .btn-close:focus {
+    /*transform: rotateZ(90deg);*/
+    background: #0052cc;
+  }
+  #error
+  {
+    display: none;
+    color: red;
+    font-size:12px;
+    margin-top:20px;
+  }
+  </style>
+</head>
+
+<body>
+  <div class="flex-column">
+  <form>
+    <label for="token-input">توکن خود را وارد کنید:</label>
+    <textarea rows="6" id="token_input" name="account_token"></textarea>
+    <input type="submit" id="submit_button" value="ثبت">
+    <span id="error">خطا: توکن نادرست است یا اتصال اینترنت برقرار نیست.</span>
+  </form>
+  </div>
+</div>
+<button type="button" class="btn-close">
+  <span class="icon-cross"></span>
+</button>
+</body>
+  <script type="text/javascript">
+    $('#submit_button').click(function(){
+      token = $('#token_input').val();
+      pywebview.api.submit_token(token)
+    });
+    $('.btn-close').click(function(){
+      pywebview.api.close();
+    });
+    function toggle(element)
+    { 
+      if (element.style.display === 'none') 
+      { 
+          element.style.display = "block"; 
+      } 
+      else 
+      { 
+          element.style.display = "none" 
+      } 
+    }
+  </script>
+</html>
