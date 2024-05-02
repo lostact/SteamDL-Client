@@ -94,10 +94,6 @@ class Api:
         except:
             return False
 
-    def update_window(self):
-        self.update_index()
-        threading.Timer(60, self.update_window).start()
-
 if __name__ == '__main__':
     api = Api()
 
@@ -113,7 +109,6 @@ if __name__ == '__main__':
         api.update_index()
         window = webview.create_window(WINDOW_TITLE, INDEX_PATH, width=400,height=600,js_api=api, frameless=True)
         api.set_window(window) 
-        threading.Timer(60, api.update_window).start()
     else:
         window = webview.create_window(WINDOW_TITLE, FORM_PATH, width=400,height=600,js_api=api, frameless=True)
         api.set_window(window)
