@@ -80,6 +80,7 @@ class Api:
         html = requests.get(SUB_URL + self._token, headers={'Accept': "text/html"}).text
         with open(INDEX_PATH, "w", encoding="utf-8") as index_file:
             index_file.write(html)
+            print("updated index")
 
     def update_config(self):
         try:
@@ -92,7 +93,7 @@ class Api:
             return False
 
     def update_window(self):
-        self.update_index(self._token)
+        self.update_index()
         threading.Timer(60, self.update_window).start()
 
 if __name__ == '__main__':
