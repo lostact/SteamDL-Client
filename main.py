@@ -11,7 +11,8 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-WINDOW_TITLE = 'SteamDL v0.4'
+VERSION = "0.4"
+WINDOW_TITLE = "SteamDL v{}".format(VERSION)
 
 SUB_URL = "https://dl.gamegk.ir/sub/"
 
