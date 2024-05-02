@@ -110,7 +110,7 @@ class Api:
 
     def update_window(self):
         self.update_index(self._token)
-        window.evaluate_js('window.location.reload()')
+        # window.evaluate_js('window.location.reload()')
         threading.Timer(60, self.update_window).start()
 
 if __name__ == '__main__':
