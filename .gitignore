@@ -1,7 +1,7 @@
-
 /venv
-build.bat
-build_debug.bat
-steamdl_latest.spec
 /dist
-steamdl_debug.spec
+*.spec
+*.bat
+account.txt
+singbox.log
+assets/web/index.html

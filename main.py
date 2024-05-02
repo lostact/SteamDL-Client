@@ -11,16 +11,14 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-WINDOW_TITLE = 'SteamDL v0.3'
+WINDOW_TITLE = 'SteamDL v0.4'
 
 SUB_URL = "https://dl.gamegk.ir/sub/"
-DEFAULT_CONFIG_URL = "https://dl.gamegk.ir/app/singbox-config-default.json"
 
-SINGBOX_PATH = resource_path("assets/sing-box.exe")
-CONFIG_PATH = resource_path('assets/singbox-config.json')
+SINGBOX_PATH = resource_path('assets/sing-box.exe')
 INDEX_PATH = resource_path('assets/web/index.html')
 FORM_PATH = resource_path('assets/web/form.html')
-
+CONFIG_PATH = resource_path('assets/sing-box.json')
 
 class Api:
     def __init__(self):
@@ -34,41 +32,27 @@ class Api:
     def set_token(self, token):
         self._token = token
 
-    def get_uuid(self, token):
-        try:
-            resp = requests.get(SUB_URL + token + "/info")
-            account_data = json.loads(resp.content)
-            uuid = account_data["proxies"]["vless"]["id"]
-            return uuid
-        except:
-            return
-
-
     def save_interface_name(self):
         with open(CONFIG_PATH, "r") as singbox_config_file:
             singbox_config = json.loads(singbox_config_file.read())
+
         interface_name = "".join(choices(ascii_lowercase, k=3)) + "".join(choices(digits, k=2))
         singbox_config["inbounds"][0]["interface_name"] = interface_name 
-        with open(CONFIG_PATH, "w") as singbox_config_file:
-            singbox_config_file.write(json.dumps(singbox_config, indent=4))
 
-    def save_uuid(self,uuid):
-        with open(CONFIG_PATH, "r") as singbox_config_file:
-            singbox_config = json.loads(singbox_config_file.read())
-        singbox_config["outbounds"][0]["uuid"] = uuid
         with open(CONFIG_PATH, "w") as singbox_config_file:
             singbox_config_file.write(json.dumps(singbox_config, indent=4))
 
     def submit_token(self, token):
-        with open("account.txt", "w") as account_file:
-            account_file.write(token)
-        uuid = self.get_uuid(token)
-        if not uuid:
+        self._token = token
+        success = api.update_config()
+        if not success:
             window.evaluate_js("document.getElementById('error').style.display = 'block';")
             return
-        self.save_uuid(uuid)
-        self._token = token
-        self.update_index(token)
+
+        with open("account.txt", "w") as account_file:
+            account_file.write(token)
+
+        self.update_index()
         self._window.load_url(INDEX_PATH)
 
     def toggle_vpn(self):
@@ -77,10 +61,8 @@ class Api:
             self._singbox_process.terminate()
         else:
             self.save_interface_name()
-            CREATE_NO_WINDOW = 134217728
-            self._singbox_process = subprocess.Popen((SINGBOX_PATH + ' run -c ' + CONFIG_PATH), close_fds=True, creationflags=CREATE_NO_WINDOW)
+            self._singbox_process = subprocess.Popen((SINGBOX_PATH + ' run -c ' + CONFIG_PATH), close_fds=True, creationflags=134217728)
 
-        # print("test")
     def check_vpn_status(self):
         if self._singbox_process:
             return self._singbox_process.poll() == None
@@ -94,41 +76,38 @@ class Api:
         self._window.destroy()
         os._exit(1)
 
-    def update_index(self, token):
-        html = requests.get(SUB_URL + token, headers={'Accept': "text/html"}).text
+    def update_index(self):
+        html = requests.get(SUB_URL + self._token, headers={'Accept': "text/html"}).text
         with open(INDEX_PATH, "w", encoding="utf-8") as index_file:
             index_file.write(html)
 
     def update_config(self):
         try:
-            default_config = json.loads(requests.get(DEFAULT_CONFIG_URL).content)
-            if default_config:
+            config_json = json.loads(requests.get(SUB_URL + self._token + "/sing-box").text)
+            if config_json:
                 with open(CONFIG_PATH, "w") as singbox_config_file:
-                    singbox_config_file.write(json.dumps(default_config, indent=4))
+                    singbox_config_file.write(json.dumps(config_json, indent=4))
+                    return True
         except:
-            pass
+            return False
 
     def update_window(self):
         self.update_index(self._token)
-        # window.evaluate_js('window.location.reload()')
         threading.Timer(60, self.update_window).start()
 
 if __name__ == '__main__':
     api = Api()
-    token = ""
-    uuid = ""
+
+    success = False
     if os.path.isfile("account.txt"):
         with open("account.txt", "r") as account_file:
             token = account_file.read()
+            if token:
+                api.set_token(token)
+                success = api.update_config()
 
-    if token:
-        uuid = api.get_uuid(token)
-
-    if uuid:
-        api.update_config()
-        api.save_uuid(uuid)
-        api.set_token(token)
-        api.update_index(token)
+    if success:
+        api.update_index()
         window = webview.create_window(WINDOW_TITLE, INDEX_PATH, width=400,height=600,js_api=api, frameless=True)
         api.set_window(window) 
         threading.Timer(60, api.update_window).start()
