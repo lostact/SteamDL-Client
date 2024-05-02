@@ -79,6 +79,7 @@ class Api:
 
     def update_index(self):
         html = requests.get(SUB_URL + self._token, headers={'Accept': "text/html"}).text
+        html = html.replace("</head>", "<div class='version'>v{}</div>\n</head>".format(VERSION))
         with open(INDEX_PATH, "w", encoding="utf-8") as index_file:
             index_file.write(html)
             print("updated index")
