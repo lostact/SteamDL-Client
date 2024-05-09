@@ -45,7 +45,7 @@ class Api:
 
     def submit_token(self, token):
         self._token = token
-        success = api.update_config()
+        success = self.update_config()
         if not success:
             window.evaluate_js("document.getElementById('error').style.display = 'block';")
             return
@@ -70,6 +70,9 @@ class Api:
         else:
             return False
 
+    def minimize(self):
+        self._window.minimize()
+    
     def close(self):
         running = self.check_vpn_status()
         if running:
