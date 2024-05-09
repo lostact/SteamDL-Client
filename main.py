@@ -11,7 +11,7 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-VERSION = "0.4.1"
+VERSION = "0.4.2"
 WINDOW_TITLE = "SteamDL v{}".format(VERSION)
 
 SUB_URL = "https://dl.gamegk.ir/sub/"
@@ -72,7 +72,7 @@ class Api:
 
     def minimize(self):
         self._window.minimize()
-    
+
     def close(self):
         running = self.check_vpn_status()
         if running:
