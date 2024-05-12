@@ -11,7 +11,7 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-VERSION = "0.4.3"
+VERSION = "0.4.4"
 WINDOW_TITLE = "SteamDL v{}".format(VERSION)
 
 SUB_URL = "https://dl.gamegk.ir/sub/"
@@ -62,7 +62,7 @@ class Api:
             self._singbox_process.terminate()
         else:
             self.save_interface_name()
-            self._singbox_process = subprocess.Popen((SINGBOX_PATH + ' run -c ' + CONFIG_PATH), close_fds=True, creationflags=134217728, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            self._singbox_process = subprocess.Popen((SINGBOX_PATH + ' run -c "' + CONFIG_PATH + '"'), close_fds=True, creationflags=134217728, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             result = self._singbox_process.communicate()
             for line in result[1].decode(encoding='utf-8').strip().split('\n'):
                 print(line)
