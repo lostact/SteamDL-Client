@@ -1,4 +1,4 @@
-import webview, sys, os, requests, json, subprocess, threading, socket, wmi, signal
+import webview, sys, os, requests, json, subprocess, threading, socket, wmi
 
 def resource_path(relative_path):
     try:
@@ -23,7 +23,7 @@ def set_dns_of_network(action, network_name, dns_servers=None):
     network = wmi_service.Win32_NetworkAdapterConfiguration(IPEnabled=True, Description=network_name)[0]
     network.SetDNSServerSearchOrder(dns_servers) if action == "change" else network.SetDNSServerSearchOrder()
 
-VERSION = "1.0.1"
+VERSION = "1.0.2"
 WINDOW_TITLE = "SteamDL v{}".format(VERSION)
 
 CACHE_DOMAIN = "dl.steamdl.ir"
@@ -114,7 +114,7 @@ class Api:
 
             # Kill MITMProxy:
             print("Killing MITM...")
-            subprocess.call(['taskkill', '/PID', str(self._mitm_process.pid), '/T', '/F'], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            subprocess.call(['taskkill', '/PID', str(self._mitm_process.pid), '/T', '/F'],close_fds=True, creationflags=134217728, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
             # Restore system DNS servers:
             print("Restoring system DNS servers...")
@@ -132,7 +132,7 @@ class Api:
 
             # Run MITMProxy:
             print("Starting MITM...")
-            self._mitm_process = subprocess.Popen(f"{MITM_PATH} --mode reverse:http://{CACHE_DOMAIN}@{local_ip}:80 --mode reverse:https://{cache_ip}@{local_ip}:443 --set keep_host_header=true --set allow_hosts={CACHE_DOMAIN} -s {MITM_ADDON_PATH}  --set token={token} --set flow_detail=0 --set termlog_verbosity=debug", close_fds=True, creationflags=134217728, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            self._mitm_process = subprocess.Popen(f"{MITM_PATH} --mode reverse:http://{CACHE_DOMAIN}@{local_ip}:80 --mode reverse:https://{cache_ip}@{local_ip}:443 --set keep_host_header=true --set allow_hosts={CACHE_DOMAIN} -s {MITM_ADDON_PATH}  --set token={token} --set flow_detail=0 --set termlog_verbosity=debug", close_fds=True, creationflags=134217728, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             # result = self._mitm_process.communicate()
             # for line in result[1].decode(encoding='utf-8').strip().split('\n'):
             #     print(line)
