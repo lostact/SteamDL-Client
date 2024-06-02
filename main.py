@@ -87,7 +87,7 @@ class Api:
     def set_window(self, window):
         self._window = window
 
-    def submit_token(self, token):
+    def submit_token(self, token, change_window = True):
         self._token = token
         response = requests.get(f"http://{API_DOMAIN}/get_user?token=" + self._token)
         success = False
@@ -102,6 +102,9 @@ class Api:
         self._cache_ip = response.headers['X-Server-IP']
         with open("account.txt", "w") as account_file:
             account_file.write(token)
+
+        if change_window:
+            self._window.load_url(INDEX_PATH)
 
     def toggle_mitm(self):
         running = self.check_mitm_status()
@@ -187,7 +190,7 @@ if __name__ == '__main__':
         with open("account.txt", "r") as account_file:
             token = account_file.read().strip()
             if token:
-                api.submit_token(token)
+                api.submit_token(token, False)
 
     if api._user_data:
         window = webview.create_window(WINDOW_TITLE, INDEX_PATH, width=400,height=600,js_api=api, frameless=True)
