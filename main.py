@@ -23,7 +23,7 @@ def set_dns_of_network(action, network_name, dns_servers=None):
     network = wmi_service.Win32_NetworkAdapterConfiguration(IPEnabled=True, Description=network_name)[0]
     network.SetDNSServerSearchOrder(dns_servers) if action == "change" else network.SetDNSServerSearchOrder()
 
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 WINDOW_TITLE = "SteamDL v{}".format(VERSION)
 
 CACHE_DOMAIN = "dl.steamdl.ir"
