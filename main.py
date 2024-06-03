@@ -23,7 +23,7 @@ def set_dns_of_network(action, network_name, dns_servers=None):
     network = wmi_service.Win32_NetworkAdapterConfiguration(IPEnabled=True, Description=network_name)[0]
     network.SetDNSServerSearchOrder(dns_servers) if action == "change" else network.SetDNSServerSearchOrder()
 
-VERSION = "1.0.2"
+VERSION = "1.0.3"
 WINDOW_TITLE = "SteamDL v{}".format(VERSION)
 
 CACHE_DOMAIN = "dl.steamdl.ir"
@@ -31,7 +31,7 @@ API_DOMAIN = "api.steamdl.ir"
 
 MITM_PATH = resource_path('assets/mitmdump.exe')
 MITM_ADDON_PATH = resource_path('assets/addon.py')
-MITM_RX_PATH = resource_path('rx.txt')
+MITM_RX_PATH = 'rx.txt'
 
 INDEX_PATH = resource_path('assets/web/index.html')
 FORM_PATH = resource_path('assets/web/form.html')
@@ -132,7 +132,7 @@ class Api:
 
             # Run MITMProxy:
             print("Starting MITM...")
-            self._mitm_process = subprocess.Popen(f"{MITM_PATH} --mode reverse:http://{CACHE_DOMAIN}@{local_ip}:80 --mode reverse:https://{cache_ip}@{local_ip}:443 --set keep_host_header=true --set allow_hosts={CACHE_DOMAIN} -s {MITM_ADDON_PATH}  --set token={token} --set flow_detail=0 --set termlog_verbosity=debug", close_fds=True, creationflags=134217728, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            self._mitm_process = subprocess.Popen(f"{MITM_PATH} --mode reverse:http://{CACHE_DOMAIN}@{local_ip}:80 --mode reverse:tcp://{cache_ip}:443@{local_ip}:443 --set keep_host_header=true --set allow_hosts={CACHE_DOMAIN} -s {MITM_ADDON_PATH}  --set token={token} --set flow_detail=0 --set termlog_verbosity=debug", close_fds=True, creationflags=134217728, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             # result = self._mitm_process.communicate()
             # for line in result[1].decode(encoding='utf-8').strip().split('\n'):
             #     print(line)
