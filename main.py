@@ -134,7 +134,7 @@ class Api:
             print("Starting MITM...")
             if not self._mitm_log_file:
                 self._mitm_log_file = open('mitm.log', 'a')
-            self._mitm_process = subprocess.Popen(f"\"{MITM_PATH}\" --mode reverse:http://{CACHE_DOMAIN}@{local_ip}:80 --mode reverse:tcp://{cache_ip}:443@{local_ip}:443 --set keep_host_header=true --set allow_hosts={CACHE_DOMAIN} -s \"{MITM_ADDON_PATH}\" --set token={token} --set termlog_verbosity=debug --set flow_detail=4", close_fds=True, creationflags=134217728, stdout=self._mitm_log_file, stderr=self._mitm_log_file)
+            self._mitm_process = subprocess.Popen(f"\"{MITM_PATH}\" --mode reverse:http://{CACHE_DOMAIN}@{local_ip}:80 --mode reverse:tcp://{cache_ip}:443@{local_ip}:443 --set keep_host_header=true --set allow_hosts={CACHE_DOMAIN} -s \"{MITM_ADDON_PATH}\" --set token={token} --set termlog_verbosity=debug --set flow_detail=0", close_fds=True, creationflags=134217728, stdout=self._mitm_log_file, stderr=self._mitm_log_file)
             # result = self._mitm_process.communicate()
             # for line in result[1].decode(encoding='utf-8').strip().split('\n'):
             #     print(line)
