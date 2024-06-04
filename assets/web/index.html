@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="fa">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Subscription Info</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="vazirmtn/Vazirmatn-font-face.css" rel="stylesheet">
+  <script src="jquery.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td,article,aside,canvas,details,embed,figure,figcaption,footer,header,hgroup,menu,nav,output,ruby,section,summary,time,mark,audio,video{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline}article,aside,details,figcaption,figure,footer,header,hgroup,menu,nav,section{display:block}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}table{border-collapse:collapse;border-spacing:0}
+    body {
+      background: #fefce8;
+      font-family: "Vazirmatn", sans-serif;
+      line-height: normal;
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      height: 100vh;
+      direction: rtl;
+    }
+    .flex-column
+    {
+      display: flex;
+      flex-direction: column;
+    }
+    .profile-card {
+      position: relative;
+      border: 2px solid #000;
+      border-radius: 1rem;
+      background: #fff;
+      width: 20rem;
+      margin-top: 4.5rem;
+      margin-bottom: 2rem;
+    }
+    .profile-card::before,
+    .profile-card::after {
+      content: "";
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: #fff;
+      border: 2px solid #000;
+      border-radius: 1rem;
+      z-index: -1;
+      transition: transform 200ms ease-out;
+    }
+    .profile-card:hover::before {
+      transform: rotate(-3deg) scale(1.02) translate(-1%);
+    }
+    .profile-card:hover::after {
+      transform: rotate(-6deg) scale(1.02) translate(-1%);
+      z-index: -2;
+      transition-delay: 100ms;
+    }
+    .profile-card__avatar {
+      width: 80px;
+      height: 80px;
+      position: absolute;
+      -o-object-fit: cover;
+      object-fit: cover;
+      top: 0;
+      left: 50%;
+      transform: translate(-50%, -80%);
+      border-radius: 1rem;
+    }
+    .profile-card__bio {
+      background: #fef9c3;
+      padding: 2rem 1rem 1rem 1rem;
+      text-align: center;
+      border-radius: 1rem;
+      overflow: hidden;
+    }
+    .profile-card__bio-name {
+      font-size: 1.25em;
+      font-weight: 900;
+      margin-bottom: 0.8rem;
+      display: inline-block;
+    }
+    .profile-card__bio-title {
+      font-size: 0.875em;
+      font-weight: 900;
+      margin-bottom: 0.6rem;
+      display: inline-block;
+    }
+    .profile-card__links {
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      overflow: hidden;
+    }
+    .profile-card__header {
+      text-align: right;
+      font-size: 1.25em;
+      font-weight: bold;
+      color: #000;
+      display: flex;
+      -webkit-box-pack: justify;
+      justify-content: right;
+      cursor: pointer;
+    }
+    .profile-card__header::after {
+      content: "\276F";
+      width: 1rem;
+      height: 1rem;
+      text-align: center;
+      -webkit-transition: all 0.3s;
+      transition: all 0.3s;
+    }
+    input {
+      position: absolute;
+      opacity: 0;
+      z-index: -1;
+    }
+    .accordion {
+      width: 100%;
+      overflow: hidden;
+    }
+    .accordion:last-child {
+      margin-bottom: 0;
+    }
+    .accordion-content {
+      max-height: 0;
+      padding: 0 1rem;
+      -webkit-transition: all 0.3s;
+      transition: all 0.3s;
+    }
+    input:checked+.profile-card__header::after {
+      -webkit-transform: rotate(90deg);
+      transform: rotate(90deg);
+    }
+    input:checked~.accordion-content {
+      max-height: 100vh;
+      padding: 16px;
+    }
+    .profile-card__separator {
+      border-bottom: 2px dashed #000;
+      border-radius: 1rem 1rem 0 0;
+      overflow: hidden;
+    }
+    .profile-card__links-button {
+      padding: 1rem;
+      display: inline-block;
+      width: 100%;
+      text-align: center;
+      border: 2px solid #000;
+      border-radius: 0.5rem;
+      color: #000;
+      transition: box-shadow 200ms ease;
+      text-decoration: none;
+      margin-bottom: 0.5rem;
+    }
+    .profile-card__links-button:hover {
+      box-shadow: -3px 3px 0 #000;
+    }
+    .progressBarContainer {
+      margin-top: 15px;
+      position: relative;
+      display: none;
+    }
+    .progressBar {
+      background-color: #c4d28b;
+      width: 100%;
+      height: 10px;
+      /*padding: 2px;*/
+      border-radius: 50px;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+
+    }
+    .progressBarRect {
+      /*background-image: linear-gradient(90deg, #f98400 0%, #fbc118 100%);*/
+      height: 100%;
+      padding: 2px;
+      border-radius: inherit;
+      /*-webkit-animation: progressLineTransmission 2.5s 0.3s ease-in-out both;*/
+      /*animation: progressLineTransmission 2.5s 0.3s ease-in-out both;*/
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      background-color: #1e4f2a;
+    }
+    .progressBarCircle {
+      background-color: #fff;
+      height: calc(14px - 4px);
+      width: calc(14px - 4px);
+      border-radius: 50%;
+      box-shadow: rgba(0, 0, 0, 0.16) 0 1px 4px;
+      display: none;
+    }
+    .progressBarPoint {
+      color: #000;
+      margin-top: 2px;
+      font-size: 10px;
+      /*font-weight: 900;*/
+      position: absolute;
+    }
+    .progressBarPoint--start {
+      right: 0;
+    }
+    .progressBarPoint--end {
+      left: -15px;
+    }
+    @-webkit-keyframes progressLineTransmission {
+      from {
+        width: 5%;
+      }
+      to {
+        width: 100%;
+      }
+    }
+    @keyframes progressLineTransmission {
+      from {
+        width: 5%;
+      }
+      to {
+        width: 100%;
+      }
+    }
+    a.power-button{
+    display: grid;
+    align-content: center;
+    width: 150px;
+    height: 150px;
+    font-size: 6em; 
+    border: 2px solid #dedede;
+    background-color: #efefef;
+    box-shadow: 0px 0px 40px 1px #ddd inset,
+      0px 2px 4px rgba(0,0,0,0.4),
+      1px 1px 4px rgba(0,0,0,0.3),
+      -1px -1px 2px rgba(0,0,0,0.1),
+      -1px 1px 2px rgba(0,0,0,0.1);
+    text-align: center;
+    line-height: 200px;
+    
+    left: 0;
+    right: 0;
+    
+    margin: auto;
+    
+    border-radius: 50%;
+     transition: color 0.8s;
+    transition-timing-function: cubic-bezier(0, 1, 0.5, 1);
+  }
+  .power-button:hover{
+    box-shadow:  0px 2px 6px rgba(0,0,0,0.4),
+      1px 1px 6px rgba(0,0,0,0.3),
+      -1px -1px 4px rgba(0,0,0,0.1),
+      -1px 1px 4px rgba(0,0,0,0.1);
+  }
+  .power-button.on svg{  
+      /*color: #2ecc71;*/
+      filter: invert(42%) sepia(93%) saturate(1352%) hue-rotate(87deg) brightness(90%) contrast(119%);
+  }
+  .btn
+  {
+    margin: 0;
+    border: 0;
+    padding: 0;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 150ms;
+    position: absolute;
+    top: 10px;
+  }
+  .btn span {
+    display: block;
+  }
+  .btn:hover, .btn:focus {
+    /*transform: rotateZ(90deg);*/
+    background: #bc0000;
+  }
+  .btn.close {
+
+    background: #fe5752;
+    right:10px;
+  }
+  .btn span {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    position: relative;
+    width: 17px;
+    height: 30px;
+  }
+  .btn.close .icon-cross:before, .btn.close .icon-cross:after {
+    content: "";
+    position: absolute;
+    top: 13px;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: #fff;
+    border-radius: 4px;
+  }
+  .btn.close .icon-cross:before {
+    transform: rotate(45deg);
+  }
+  .btn.close .icon-cross:after {
+    transform: rotate(-45deg);
+  }
+  .btn.min
+  {
+    background: #febd2f;
+    right:45px;
+  }
+  .btn.min .icon-line:before {
+    content: "";
+    position: absolute;
+    top: 13px;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: #fff;
+    border-radius: 4px;
+  }
+  .btn.exit
+  {
+    background: #4895ff;
+    right: 10px;
+    bottom: 10px;
+    top: auto;
+  }
+  .btn.exit .icon-exit
+  {
+    left: 1.5px;
+    width: 15px;
+    height: 15px;
+    color: white;
+  }
+  span.row
+  {
+    display: block;
+  }
+  #version
+  {
+    position: absolute;
+    font-size: 10px;
+    left: 5px;
+    bottom: 5px;
+  }
+  #expiry_date
+  {
+    direction: rtl;
+  }
+  </style>
+  <div id='version'></div>
+</head>
+
+<body>
+  <div class="flex-column">
+  <div class="profile-card">
+    <img alt="Avatar Image" class="profile-card__avatar"
+      src="Steamdlx180.png" />
+    <div class="profile-card__bio">
+      <span class="row"><h1 class="profile-card__bio-name">شماره اشتراک:</h1> <span id="subscription_id"></span></span>
+      <span class="row"><h1 class="profile-card__bio-name">وضعیت:</h1> <span id="subscription_status"></span></span>
+      <span class="row"><h2 class="profile-card__bio-title">حجم دانلود شده: </h2> <span id="used_traffic"></span></span>
+      <span class="row"><h2 class="profile-card__bio-title">حجم کل:</h2> <span id="total_traffic">∞</span></span>
+      <span class="row"><h2 class="profile-card__bio-title">زمان باقیمانده:</h2> <span id="expiry_date"></span></span>
+      <span class="row"><h2 class="profile-card__bio-title">آی پی محلی:</h2> <span id="local_ip"></span></span>
+<!--       <div class='progressBarContainer'>
+        <div class='progressBar'>
+          <div class='progressBarRect'>
+            <span class='progressBarCircle'></span>
+          </div>
+        </div>
+        <span class='progressBarPoint progressBarPoint--start'>0</span>
+        <span class='progressBarPoint progressBarPoint--end'>∞</span>
+      </div> -->
+    </div>  
+  </div>
+  <a class="power-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="width:100px;margin:auto;"><path d="M288 32c0-17.7-14.3-32-32-32s-32 14.3-32 32V256c0 17.7 14.3 32 32 32s32-14.3 32-32V32zM143.5 120.6c13.6-11.3 15.4-31.5 4.1-45.1s-31.5-15.4-45.1-4.1C49.7 115.4 16 181.8 16 256c0 132.5 107.5 240 240 240s240-107.5 240-240c0-74.2-33.8-140.6-86.6-184.6c-13.6-11.3-33.8-9.4-45.1 4.1s-9.4 33.8 4.1 45.1c38.9 32.3 63.5 81 63.5 135.4c0 97.2-78.8 176-176 176s-176-78.8-176-176c0-54.4 24.7-103.1 63.5-135.4z"/></svg></a>
+</div>
+<button type="button" class="btn close">
+  <span class="icon-cross"></span>
+</button>
+<button type="button" class="btn min">
+  <span class="icon-line"></span>
+</button>
+<!-- <button type="button" class="btn exit">
+  <span class="icon-exit"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="#ffffff" d="M377.9 105.9L500.7 228.7c7.2 7.2 11.3 17.1 11.3 27.3s-4.1 20.1-11.3 27.3L377.9 406.1c-6.4 6.4-15 9.9-24 9.9c-18.7 0-33.9-15.2-33.9-33.9l0-62.1-128 0c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32l128 0 0-62.1c0-18.7 15.2-33.9 33.9-33.9c9 0 17.6 3.6 24 9.9zM160 96L96 96c-17.7 0-32 14.3-32 32l0 256c0 17.7 14.3 32 32 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c-53 0-96-43-96-96L0 128C0 75 43 32 96 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32z"/></svg></span>
+</button> -->
+
+</body>
+  <script type="text/javascript">
+    function formatBytes(bytes,decimals) {
+       if(bytes == 0) return '0';
+       var k = 1024,
+           dm = decimals || 2,
+           sizes = ['بایت', 'کیلوبایت', 'مگابایت', 'گیگابایت', 'ترابایت', 'PB', 'EB', 'ZB', 'YB'],
+           i = Math.floor(Math.log(bytes) / Math.log(k));
+       return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    }
+
+    function check_mitm_status()
+    {
+      pywebview.api.check_mitm_status().then(function(running) {
+        if (running)
+        {
+          if (!$('.power-button').hasClass('on'))
+          {
+            $('.power-button').addClass('on');
+          }
+        }
+        else
+        {
+          if ($('.power-button').hasClass('on'))
+          {
+            $('.power-button').removeClass('on');
+          }
+        }
+      });
+    }
+
+    function check_traffic()
+    {
+      pywebview.api.get_rx().then(function(rx) {
+        $("#used_traffic").text(formatBytes(rx));
+      });
+    }
+
+    window.addEventListener('pywebviewready', function() {
+      check_mitm_status();
+      check_interval = setInterval(check_mitm_status, 1001);
+
+      check_traffic();
+      check_traffic = setInterval(check_traffic, 2001);
+
+      status_translation = {"active": "فعال", "expired": "منقضی شده"};
+      pywebview.api.get_user_data().then(function(user_data) {
+        $("#subscription_id").text(user_data["subscription_id"]);
+        $("#subscription_status").text(status_translation[user_data["status"]] || "غیر فعال");
+        if (user_data["end"])
+        {
+          now = new Date();
+          then = new Date(user_data["end"])
+          days = Math.ceil((then.getTime() - now.getTime())/86400000)
+          $("#expiry_date").text(days + " روز");
+        }
+        else
+        {
+          $("#expiry_date").hide();
+        }
+      });
+
+      pywebview.api.get_version().then(function(version) {
+        $("#version").text("v" + version);
+      });
+    })
+    
+    $('.power-button').click(function() {
+      pywebview.api.check_mitm_status().then(function(running) {
+        pywebview.api.toggle_mitm().then(function(local_ip) {
+          $("#local_ip").text(local_ip);
+        });
+      });
+    });
+
+    $('.btn.close').click(function(){
+      pywebview.api.close();
+    });
+    $('.btn.min').click(function(){
+      pywebview.api.minimize();
+    });
+  </script>
+</html>

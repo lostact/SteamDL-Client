@@ -132,7 +132,7 @@ class Api:
 
             # Run MITMProxy:
             print("Starting MITM...")
-            self._mitm_process = subprocess.Popen(f"{MITM_PATH} --mode reverse:http://{CACHE_DOMAIN}@{local_ip}:80 --mode reverse:tcp://{cache_ip}:443@{local_ip}:443 --set keep_host_header=true --set allow_hosts={CACHE_DOMAIN} -s {MITM_ADDON_PATH}  --set token={token} --set flow_detail=0 --set termlog_verbosity=debug", close_fds=True, creationflags=134217728, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            self._mitm_process = subprocess.Popen(f"\"{MITM_PATH}\" --mode reverse:http://{CACHE_DOMAIN}@{local_ip}:80 --mode reverse:tcp://{cache_ip}:443@{local_ip}:443 --set keep_host_header=true --set allow_hosts={CACHE_DOMAIN} -s \"{MITM_ADDON_PATH}\" --set token={token} --set flow_detail=0 --set termlog_verbosity=debug", close_fds=True, creationflags=134217728, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             # result = self._mitm_process.communicate()
             # for line in result[1].decode(encoding='utf-8').strip().split('\n'):
             #     print(line)
