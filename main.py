@@ -23,8 +23,9 @@ def set_dns_of_network(action, network_name, dns_servers=None):
     network = wmi_service.Win32_NetworkAdapterConfiguration(IPEnabled=True, Description=network_name)[0]
     network.SetDNSServerSearchOrder(dns_servers) if action == "change" else network.SetDNSServerSearchOrder()
 
-VERSION = "1.0.4"
-WINDOW_TITLE = "SteamDL v{}".format(VERSION)
+CURRENT_VERSION = "1.0.5"
+WINDOW_TITLE = "SteamDL v{}".format(CURRENT_VERSION)
+GITHUB_RELEASE_URL = "https://github.com/lostact/SteamDL-Client/releases/latest/download/steamdl_installer.exe"
 
 CACHE_DOMAIN = "dl.steamdl.ir"
 API_DOMAIN = "api.steamdl.ir"
@@ -34,8 +35,51 @@ MITM_ADDON_PATH = resource_path('assets/addon.py')
 
 INDEX_PATH = resource_path('assets/web/index.html')
 FORM_PATH = resource_path('assets/web/form.html')
+UPDATE_PATH = resource_path('assets/web/update.html')
 
 SEARCH_IP_BYTES = socket.inet_aton("127.0.0.1")
+
+def check_for_update():
+    try:
+        response = requests.head(GITHUB_RELEASE_URL, allow_redirects=False)
+        redirect_url = response.headers["Location"]
+
+        latest_version = redirect_url.split('/')[-2]
+        current_tuple, latest_tuple = tuple(map(int, (CURRENT_VERSION.split(".")))), tuple(map(int, (latest_version.split("."))))
+        print(current_tuple, latest_tuple)
+        if latest_tuple > current_tuple:
+            return True, redirect_url
+        return False, None
+    except requests.RequestException as e:
+        print(f"Failed to check for update: {e}")
+        return False, None
+
+def apply_update(download_url, progress_callback):
+    installer_path = "steamdl_installer.exe"
+    print(download_url)
+    try:
+        response = requests.get(download_url, allow_redirects=True, stream=True)
+        response.raise_for_status()
+        print(response)
+        total_length = response.headers.get('content-length')
+        if total_length is None:  # no content length header
+            installer_path = None
+        else:
+            total_length = int(total_length)
+            dl = 0
+            with open(installer_path, "wb") as installer_file:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        dl += len(chunk)
+                        installer_file.write(chunk)
+                        done = int(100 * dl / total_length)
+                        progress_callback(done)
+            print("Downloading update finished.")
+            subprocess.run([installer_path, "/S"], check=True)
+            sys.exit()
+    except requests.RequestException as e:
+        print(f"Failed to apply update: {e}")
+        return None
 
 class Api:
     def __init__(self):
@@ -181,11 +225,22 @@ class Api:
     def close(self):
         self._window.destroy()
 
-    def get_version(self):
-        return VERSION
+    def get_current_version(self):
+        return CURRENT_VERSION
 
 if __name__ == '__main__':
     api = Api()
+
+    update_available, download_url = check_for_update()
+    if update_available:
+        def progress_callback(progress):
+            window.evaluate_js(f'updateProgress({progress})')
+
+        update_thread = threading.Thread(target=apply_update, args=(download_url, progress_callback))
+        update_thread.start()
+
+        window = webview.create_window(WINDOW_TITLE, UPDATE_PATH, width=300,height=250,js_api=api, frameless=True)
+        webview.start()
 
     success = False
     if os.path.isfile("account.txt"):
@@ -207,3 +262,4 @@ if __name__ == '__main__':
     running = api.check_mitm_status()
     if running:
         api.toggle_mitm()
+    sys.exit()
