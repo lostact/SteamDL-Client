@@ -75,7 +75,7 @@ def apply_update(download_url, progress_callback):
                         done = int(100 * dl / total_length)
                         progress_callback(done)
             print("Downloading update finished.")
-            subprocess.Popen([installer_path, "/S"],close_fds=True, creationflags=subprocess.DETACHED_PROCESS|subprocess.CREATE_NEW_PROCESS_GROUP|subprocess.CREATE_NO_WINDOW)
+            subprocess.Popen([installer_path, "/S"], close_fds=True, creationflags=subprocess.DETACHED_PROCESS|subprocess.CREATE_NEW_PROCESS_GROUP|subprocess.CREATE_NO_WINDOW)
             os._exit(0)
     except requests.RequestException as e:
         print(f"Failed to apply update: {e}")
@@ -239,8 +239,10 @@ if __name__ == '__main__':
         update_thread = threading.Thread(target=apply_update, args=(download_url, progress_callback))
         update_thread.start()
 
-        window = webview.create_window(WINDOW_TITLE, UPDATE_PATH, width=300,height=225,js_api=api, frameless=True)
+        window = webview.create_window(WINDOW_TITLE, UPDATE_PATH, width=300,height=210,js_api=api, frameless=True)
         webview.start()
+    elif os.path.isfile("steamdl_installer.exe"):
+        os.remove("steamdl_installer.exe")
 
     success = False
     if os.path.isfile("account.txt"):
