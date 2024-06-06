@@ -75,8 +75,8 @@ def apply_update(download_url, progress_callback):
                         done = int(100 * dl / total_length)
                         progress_callback(done)
             print("Downloading update finished.")
-            subprocess.Popen([installer_path, "/S"], shell=True)
-            sys.exit()
+            subprocess.Popen(installer_path, creationflags=subprocess.DETACHED_PROCESS|subprocess.CREATE_NEW_PROCESS_GROUP)
+            os._exit(0)
     except requests.RequestException as e:
         print(f"Failed to apply update: {e}")
         return None
@@ -158,7 +158,7 @@ class Api:
 
             # Kill MITMProxy:
             print("Killing MITM...")
-            subprocess.call(['taskkill', '/PID', str(self._mitm_process.pid), '/T', '/F'],close_fds=True, creationflags=134217728, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            subprocess.call(['taskkill', '/PID', str(self._mitm_process.pid), '/T', '/F'], close_fds=True, creationflags=134217728, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
             # Restore system DNS servers:
             print("Restoring system DNS servers...")
