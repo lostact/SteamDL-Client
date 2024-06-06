@@ -23,7 +23,7 @@ def set_dns_of_network(action, network_name, dns_servers=None):
     network = wmi_service.Win32_NetworkAdapterConfiguration(IPEnabled=True, Description=network_name)[0]
     network.SetDNSServerSearchOrder(dns_servers) if action == "change" else network.SetDNSServerSearchOrder()
 
-CURRENT_VERSION = "1.0.5"
+CURRENT_VERSION = "1.0.6"
 WINDOW_TITLE = "SteamDL v{}".format(CURRENT_VERSION)
 GITHUB_RELEASE_URL = "https://github.com/lostact/SteamDL-Client/releases/latest/download/steamdl_installer.exe"
 
@@ -75,7 +75,7 @@ def apply_update(download_url, progress_callback):
                         done = int(100 * dl / total_length)
                         progress_callback(done)
             print("Downloading update finished.")
-            subprocess.run([installer_path, "/S"], check=True)
+            subprocess.Popen([installer_path, "/S"], shell=True)
             sys.exit()
     except requests.RequestException as e:
         print(f"Failed to apply update: {e}")
@@ -239,7 +239,7 @@ if __name__ == '__main__':
         update_thread = threading.Thread(target=apply_update, args=(download_url, progress_callback))
         update_thread.start()
 
-        window = webview.create_window(WINDOW_TITLE, UPDATE_PATH, width=300,height=250,js_api=api, frameless=True)
+        window = webview.create_window(WINDOW_TITLE, UPDATE_PATH, width=300,height=225,js_api=api, frameless=True)
         webview.start()
 
     success = False
