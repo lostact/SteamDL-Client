@@ -225,7 +225,7 @@ class Api:
     def close(self):
         self._window.destroy()
 
-    def get_current_version(self):
+    def get_version(self):
         return CURRENT_VERSION
 
 if __name__ == '__main__':
