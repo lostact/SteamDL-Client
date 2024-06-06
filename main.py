@@ -75,7 +75,7 @@ def apply_update(download_url, progress_callback):
                         done = int(100 * dl / total_length)
                         progress_callback(done)
             print("Downloading update finished.")
-            subprocess.Popen(installer_path, creationflags=subprocess.DETACHED_PROCESS|subprocess.CREATE_NEW_PROCESS_GROUP)
+            subprocess.Popen([installer_path, "/S"],close_fds=True, creationflags=subprocess.DETACHED_PROCESS|subprocess.CREATE_NEW_PROCESS_GROUP|subprocess.CREATE_NO_WINDOW)
             os._exit(0)
     except requests.RequestException as e:
         print(f"Failed to apply update: {e}")
