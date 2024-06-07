@@ -47,7 +47,7 @@ def check_for_update():
         latest_version = redirect_url.split('/')[-2]
         current_tuple, latest_tuple = tuple(map(int, (CURRENT_VERSION.split(".")))), tuple(map(int, (latest_version.split("."))))
         print(current_tuple, latest_tuple)
-        if latest_tuple > current_tuple:
+        if latest_tuple and latest_tuple > current_tuple:
             return True, redirect_url
         return False, None
     except requests.RequestException as e:
