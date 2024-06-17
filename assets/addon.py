@@ -20,7 +20,7 @@ class SteamDL:
             flow.request.headers["Host"] = self.cache_domain    
             flow.request.headers["Auth-Token"] = ctx.options.token
 
-    def responseheaders(self,flow):
+    def response(self,flow):
         self.rx_bytes += len(flow.response.content)
         current_time = time()
         if current_time - self.last_update_time > 2:

@@ -1,9 +1,7 @@
 /venv
 /dist
+/freeze
 *.spec
 *.bat
-account.txt
-singbox.log
-7z.exe
-rx.txt
-/*.nsi
+*.exe
+*.nsi
