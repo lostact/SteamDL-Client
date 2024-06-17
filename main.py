@@ -133,7 +133,11 @@ class Api:
 
     def submit_token(self, token, change_window = True):
         self._token = token
-        response = requests.get(f"https://{API_DOMAIN}/get_user?token=" + self._token)
+        try:
+            response = requests.get(f"https://{API_DOMAIN}/get_user?token=" + self._token)
+        except Exception as error:
+            print(f"Failed to get user data: {error}")
+        
         success = False
         if response:
             success = bool(response.status_code == 200)
@@ -179,7 +183,7 @@ class Api:
             print("Starting Proxy...")
             if not self._proxy_log_file:
                 self._proxy_log_file = open('proxy.log', 'a')
-            self._proxy_process = subprocess.Popen(f"\"{PROXY_EXEC_PATH}\" --mode reverse:http://{CACHE_DOMAIN}@{local_ip}:80 --mode reverse:tcp://{cache_ip}:443@{local_ip}:443 --set keep_host_header=true --set allow_hosts={CACHE_DOMAIN} -s \"{PROXY_ADDON_PATH}\" --set token={token} --set termlog_verbosity=warn --set flow_detail=0", close_fds=True, creationflags=134217728, stdout=self._proxy_log_file, stderr=self._proxy_log_file)
+            self._proxy_process = subprocess.Popen(f"\"{PROXY_EXEC_PATH}\" --mode reverse:http://{CACHE_DOMAIN}@{local_ip}:80 --mode reverse:tcp://{cache_ip}:443@{local_ip}:443 --set keep_host_header=true --set allow_hosts={CACHE_DOMAIN} -s \"{PROXY_ADDON_PATH}\" --set token={token} --set termlog_verbosity=warn --set flow_detail=0 --set stream_large_bodies=100k", close_fds=True, creationflags=134217728, stdout=self._proxy_log_file, stderr=self._proxy_log_file)
             # result = self._proxy_process.communicate()
             # for line in result[1].decode(encoding='utf-8').strip().split('\n'):
             #     print(line)
