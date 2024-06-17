@@ -406,9 +406,9 @@
        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
     }
 
-    function check_mitm_status()
+    function check_proxy_status()
     {
-      pywebview.api.check_mitm_status().then(function(running) {
+      pywebview.api.check_proxy_status().then(function(running) {
         if (running)
         {
           if (!$('.power-button').hasClass('on'))
@@ -434,8 +434,8 @@
     }
 
     window.addEventListener('pywebviewready', function() {
-      check_mitm_status();
-      check_interval = setInterval(check_mitm_status, 1001);
+      check_proxy_status();
+      check_interval = setInterval(check_proxy_status, 1001);
 
       check_traffic();
       check_traffic = setInterval(check_traffic, 2001);
@@ -463,8 +463,8 @@
     })
     
     $('.power-button').click(function() {
-      pywebview.api.check_mitm_status().then(function(running) {
-        pywebview.api.toggle_mitm().then(function(local_ip) {
+      pywebview.api.check_proxy_status().then(function(running) {
+        pywebview.api.toggle_proxy().then(function(local_ip) {
           $("#local_ip").text(local_ip);
         });
       });

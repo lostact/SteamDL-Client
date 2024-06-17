@@ -1,4 +1,5 @@
-import webview, sys, os, requests, json, subprocess, threading, socket, wmi
+import sys, os, requests, json, subprocess, threading, socket, wmi
+from webview import start, create_window
 
 def resource_path(relative_path):
     try:
@@ -18,7 +19,7 @@ def get_all_networks_and_dns_servers():
     return networks_and_servers
 
 
-def set_dns_of_network(action, network_name, dns_servers=None):
+def configure_network_dns(action, network_name, dns_servers=None):
     wmi_service = wmi.WMI()
     network = wmi_service.Win32_NetworkAdapterConfiguration(IPEnabled=True, Description=network_name)[0]
     network.SetDNSServerSearchOrder(dns_servers) if action == "change" else network.SetDNSServerSearchOrder()
@@ -30,8 +31,8 @@ GITHUB_RELEASE_URL = "https://github.com/lostact/SteamDL-Client/releases/latest/
 CACHE_DOMAIN = "dl.steamdl.ir"
 API_DOMAIN = "api.steamdl.ir"
 
-MITM_PATH = resource_path('assets/mitmdump.exe')
-MITM_ADDON_PATH = resource_path('assets/addon.py')
+PROXY_EXEC_PATH = resource_path('assets/proxy.exe')
+PROXY_ADDON_PATH = resource_path('assets/addon.py')
 
 INDEX_PATH = resource_path('assets/web/index.html')
 FORM_PATH = resource_path('assets/web/form.html')
@@ -91,8 +92,8 @@ class Api:
         self._local_ip = None
         self._local_ip_bytes = None
 
-        self._mitm_process = None
-        self._mitm_log_file = None
+        self._proxy_process = None
+        self._proxy_log_file = None
         self._dns_thread = None
         self._dns_backup = None
 
@@ -106,7 +107,7 @@ class Api:
             print(f"Error obtaining default interface IP: {e}")
             return None
 
-    def handle_dns_client(self, data, client_address, dns_socket):
+    def process_dns_request(self, data, client_address, dns_socket):
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as upstream_socket:
             upstream_socket.sendto(data, (self._cache_ip, 53))
             response_data_bytes, _ = upstream_socket.recvfrom(512)
@@ -120,10 +121,10 @@ class Api:
         self._dns_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._dns_socket.bind((self._local_ip, 53))
         print(f"UDP proxy listening on {self._local_ip}:53")
-        while self.check_mitm_status():
+        while self.check_proxy_status():
             try:
                 data, client_address = self._dns_socket.recvfrom(512)
-                client_thread = threading.Thread(target=self.handle_dns_client, args=(data, client_address, self._dns_socket))
+                client_thread = threading.Thread(target=self.process_dns_request, args=(data, client_address, self._dns_socket))
                 client_thread.start()
             except:
                 pass
@@ -133,13 +134,14 @@ class Api:
 
     def submit_token(self, token, change_window = True):
         self._token = token
-        response = requests.get(f"http://{API_DOMAIN}/get_user?token=" + self._token)
+        response = requests.get(f"https://{API_DOMAIN}/get_user?token=" + self._token)
         success = False
         if response:
             success = bool(response.status_code == 200)
 
         if not success:
-            window.evaluate_js("document.getElementById('error').style.display = 'block';")
+            if self._window:
+                self._window.evaluate_js("document.getElementById('error').style.display = 'block';")
             return
 
         self._user_data = json.loads(response.content)
@@ -150,23 +152,23 @@ class Api:
         if change_window:
             self._window.load_url(INDEX_PATH)
 
-    def toggle_mitm(self):
-        running = self.check_mitm_status()
+    def toggle_proxy(self):
+        running = self.check_proxy_status()
+        # Kill Proxy (even if it's not running, to make sure we can run):
+        print("Killing Proxy...")
+        subprocess.call(['taskkill', '/PID', str(self._proxy_process.pid), '/T', '/F'], close_fds=True, creationflags=134217728, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
         if running:
             local_ip = ""
             print("Stopping Service...")
-
-            # Kill MITMProxy:
-            print("Killing MITM...")
-            subprocess.call(['taskkill', '/PID', str(self._mitm_process.pid), '/T', '/F'], close_fds=True, creationflags=134217728, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
             # Restore system DNS servers:
             print("Restoring system DNS servers...")
             for network in self._dns_backup:
                 if len(self._dns_backup[network]) > 1:
-                    set_dns_of_network("change", network, self._dns_backup[network])
+                    configure_network_dns("change", network, self._dns_backup[network])
                 else:
-                    set_dns_of_network("clear", network)
+                    configure_network_dns("clear", network)
         else:
             print("Starting Service...")
             token = self._token
@@ -174,16 +176,16 @@ class Api:
             local_ip = self._local_ip = self.get_default_interface_ip()
             local_ip_bytes = self._local_ip_bytes = socket.inet_aton(local_ip)
 
-            # Run MITMProxy:
-            print("Starting MITM...")
-            if not self._mitm_log_file:
-                self._mitm_log_file = open('mitm.log', 'a')
-            self._mitm_process = subprocess.Popen(f"\"{MITM_PATH}\" --mode reverse:http://{CACHE_DOMAIN}@{local_ip}:80 --mode reverse:tcp://{cache_ip}:443@{local_ip}:443 --set keep_host_header=true --set allow_hosts={CACHE_DOMAIN} -s \"{MITM_ADDON_PATH}\" --set token={token} --set termlog_verbosity=warn --set flow_detail=0", close_fds=True, creationflags=134217728, stdout=self._mitm_log_file, stderr=self._mitm_log_file)
-            # result = self._mitm_process.communicate()
+            # Run Proxy:
+            print("Starting Proxy...")
+            if not self._proxy_log_file:
+                self._proxy_log_file = open('proxy.log', 'a')
+            self._proxy_process = subprocess.Popen(f"\"{PROXY_EXEC_PATH}\" --mode reverse:http://{CACHE_DOMAIN}@{local_ip}:80 --mode reverse:tcp://{cache_ip}:443@{local_ip}:443 --set keep_host_header=true --set allow_hosts={CACHE_DOMAIN} -s \"{PROXY_ADDON_PATH}\" --set token={token} --set termlog_verbosity=warn --set flow_detail=0", close_fds=True, creationflags=134217728, stdout=self._proxy_log_file, stderr=self._proxy_log_file)
+            # result = self._proxy_process.communicate()
             # for line in result[1].decode(encoding='utf-8').strip().split('\n'):
             #     print(line)
-            # with self._mitm_process.stdout:
-            #     for line in iter(self._mitm_process.stdout.readline, b''):
+            # with self._proxy_process.stdout:
+            #     for line in iter(self._proxy_process.stdout.readline, b''):
             #         print(line.decode("utf-8").strip())
 
 
@@ -197,13 +199,13 @@ class Api:
             print("Changing system DNS servers...")
             dns_backup = self._dns_backup = get_all_networks_and_dns_servers()
             for network in dns_backup:
-                set_dns_of_network("change", network, (local_ip, "1.1.1.1"))
+                configure_network_dns("change", network, (local_ip, "1.1.1.1"))
         return local_ip
 
 
-    def check_mitm_status(self):
-        if self._mitm_process:
-            return self._mitm_process.poll() == None
+    def check_proxy_status(self):
+        if self._proxy_process:
+            return self._proxy_process.poll() == None
         else:
             return False
 
@@ -244,7 +246,6 @@ if __name__ == '__main__':
     elif os.path.isfile("steamdl_installer.exe"):
         os.remove("steamdl_installer.exe")
 
-    success = False
     if os.path.isfile("account.txt"):
         with open("account.txt", "r") as account_file:
             token = account_file.read().strip()
@@ -261,7 +262,7 @@ if __name__ == '__main__':
     webview.start()
 
     # Quit:
-    running = api.check_mitm_status()
-    if running:
-        api.toggle_mitm()
+    if api.check_proxy_status():
+        api.toggle_proxy()
+
     sys.exit()
