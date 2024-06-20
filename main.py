@@ -239,6 +239,7 @@ if __name__ == '__main__':
 
         window = webview.create_window(WINDOW_TITLE, UPDATE_PATH, width=300,height=210,js_api=api, frameless=True)
         webview.start()
+        sys.exit()
     elif os.path.isfile("steamdl_installer.exe"):
         os.remove("steamdl_installer.exe")
 
