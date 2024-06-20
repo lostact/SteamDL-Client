@@ -156,11 +156,13 @@ class Api:
             self._window.load_url(INDEX_PATH)
 
     def toggle_proxy(self):
+        running = self.check_proxy_status()
+        
         # Kill Proxy (even if it's not running, to make sure we can run):
         print("Killing Proxy...")
         subprocess.call(['taskkill', '/IM', 'http_proxy.exe', '/T', '/F'], close_fds=True, creationflags=134217728, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-        if self.check_proxy_status():
+        if running:
             local_ip = ""
 
             # Restore system DNS servers:
