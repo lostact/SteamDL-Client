@@ -23,7 +23,7 @@ def configure_network_dns(action, network_name, dns_servers=None):
     network = wmi_service.Win32_NetworkAdapterConfiguration(IPEnabled=True, Description=network_name)[0]
     network.SetDNSServerSearchOrder(dns_servers) if action == "change" else network.SetDNSServerSearchOrder()
 
-CURRENT_VERSION = "1.0.8"
+CURRENT_VERSION = "1.1.0"
 WINDOW_TITLE = "SteamDL v{}".format(CURRENT_VERSION)
 GITHUB_RELEASE_URL = "https://github.com/lostact/SteamDL-Client/releases/latest/download/steamdl_installer.exe"
 
@@ -120,13 +120,13 @@ class Api:
         self._dns_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._dns_socket.bind((self._local_ip, 53))
         print(f"UDP proxy listening on {self._local_ip}:53")
-        while self.check_proxy_status():
+        while True:
             try:
                 data, client_address = self._dns_socket.recvfrom(512)
                 client_thread = threading.Thread(target=self.process_dns_request, args=(data, client_address, self._dns_socket))
                 client_thread.start()
-            except:
-                pass
+            except Exception as error:
+                print(f"DNS server error: {error}")
 
     def set_window(self, window):
         self._window = window
@@ -156,14 +156,12 @@ class Api:
             self._window.load_url(INDEX_PATH)
 
     def toggle_proxy(self):
-        running = self.check_proxy_status()
         # Kill Proxy (even if it's not running, to make sure we can run):
         print("Killing Proxy...")
         subprocess.call(['taskkill', '/IM', 'http_proxy.exe', '/T', '/F'], close_fds=True, creationflags=134217728, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-        if running:
+        if self.check_proxy_status():
             local_ip = ""
-            print("Stopping Service...")
 
             # Restore system DNS servers:
             print("Restoring system DNS servers...")
@@ -196,6 +194,7 @@ class Api:
             dns_backup = self._dns_backup = get_all_networks_and_dns_servers()
             for network in dns_backup:
                 configure_network_dns("change", network, (local_ip, "1.1.1.1"))
+        
         return local_ip
 
 
