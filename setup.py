@@ -8,7 +8,7 @@ build_exe_options = {
 
 cx_Freeze.setup(
     name = "SteamDL",
-    version = "1.1.0",
+    version = "1.1.1",
     options = {"build_exe": build_exe_options},
     executables = [cx_Freeze.Executable("main.py",target_name="SteamDL", icon="steamdl.ico",uac_admin=True, base = "gui")]
 )

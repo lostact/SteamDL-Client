@@ -23,7 +23,7 @@ def configure_network_dns(action, network_name, dns_servers=None):
     network = wmi_service.Win32_NetworkAdapterConfiguration(IPEnabled=True, Description=network_name)[0]
     network.SetDNSServerSearchOrder(dns_servers) if action == "change" else network.SetDNSServerSearchOrder()
 
-CURRENT_VERSION = "1.1.0"
+CURRENT_VERSION = "1.1.1"
 WINDOW_TITLE = "SteamDL v{}".format(CURRENT_VERSION)
 GITHUB_RELEASE_URL = "https://github.com/lostact/SteamDL-Client/releases/latest/download/steamdl_installer.exe"
 
@@ -157,7 +157,6 @@ class Api:
 
     def toggle_proxy(self):
         running = self.check_proxy_status()
-        
         # Kill Proxy (even if it's not running, to make sure we can run):
         print("Killing Proxy...")
         subprocess.call(['taskkill', '/IM', 'http_proxy.exe', '/T', '/F'], close_fds=True, creationflags=134217728, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
