@@ -3,7 +3,7 @@ import cx_Freeze
 build_exe_options = {
     "build_exe": "dist/steamdl",
     "include_files": "assets",
-    "excludes": ["tkinter", "PyQt5", "webview.platforms.android", "webview.platforms.cocoa", "webview.platforms.gtk", "webview.platforms.qt", "webview.platforms.mshtm", "webview.platforms.cef"],
+    "excludes": ["tkinter", "PyQt5", "webview.platforms.android", "webview.platforms.cocoa", "webview.platforms.gtk", "webview.platforms.qt"],
 }
 
 cx_Freeze.setup(
