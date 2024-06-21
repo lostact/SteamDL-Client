@@ -1,4 +1,22 @@
-import sys, os, requests, json, subprocess, threading, socket, wmi, webview
+import sys, os, requests, json, subprocess, threading, socket, wmi, webview, logging
+
+# Configure logging
+log_file = 'app.log'
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(message)s',
+    handlers=[
+        logging.FileHandler(log_file),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+
+# Function to log uncaught exceptions
+def log_uncaught_exceptions(exctype, value, tb):
+    logging.error("Uncaught exception", exc_info=(exctype, value, tb))
+
+# Assign the function to sys.excepthook
+sys.excepthook = log_uncaught_exceptions
 
 def resource_path(relative_path):
     try:
@@ -23,7 +41,7 @@ def configure_network_dns(action, network_name, dns_servers=None):
     network = wmi_service.Win32_NetworkAdapterConfiguration(IPEnabled=True, Description=network_name)[0]
     network.SetDNSServerSearchOrder(dns_servers) if action == "change" else network.SetDNSServerSearchOrder()
 
-CURRENT_VERSION = "1.1.1"
+CURRENT_VERSION = "1.1.2"
 WINDOW_TITLE = "SteamDL v{}".format(CURRENT_VERSION)
 GITHUB_RELEASE_URL = "https://github.com/lostact/SteamDL-Client/releases/latest/download/steamdl_installer.exe"
 
@@ -46,21 +64,19 @@ def check_for_update():
 
         latest_version = redirect_url.split('/')[-2]
         current_tuple, latest_tuple = tuple(map(int, (CURRENT_VERSION.split(".")))), tuple(map(int, (latest_version.split("."))))
-        print(current_tuple, latest_tuple)
+        logging.info(str(current_tuple) +  str(latest_tuple))
         if latest_tuple and latest_tuple > current_tuple:
             return True, redirect_url
         return False, None
     except requests.RequestException as e:
-        print(f"Failed to check for update: {e}")
+        logging.info(f"Failed to check for update: {e}")
         return False, None
 
 def apply_update(download_url, progress_callback):
     installer_path = "steamdl_installer.exe"
-    print(download_url)
     try:
         response = requests.get(download_url, allow_redirects=True, stream=True)
         response.raise_for_status()
-        print(response)
         total_length = response.headers.get('content-length')
         if total_length is None:  # no content length header
             installer_path = None
@@ -74,11 +90,11 @@ def apply_update(download_url, progress_callback):
                         installer_file.write(chunk)
                         done = int(100 * dl / total_length)
                         progress_callback(done)
-            print("Downloading update finished.")
+            logging.info("Downloading update finished.")
             subprocess.Popen([installer_path, "/S"], close_fds=True, creationflags=subprocess.DETACHED_PROCESS|subprocess.CREATE_NEW_PROCESS_GROUP|subprocess.CREATE_NO_WINDOW)
             os._exit(0)
     except requests.RequestException as e:
-        print(f"Failed to apply update: {e}")
+        logging.error(f"Failed to apply update: {e}")
         return None
 
 class Api:
@@ -103,7 +119,7 @@ class Api:
                 ip_address = s.getsockname()[0]
             return ip_address
         except Exception as e:
-            print(f"Error obtaining default interface IP: {e}")
+            logging.error(f"Error obtaining default interface IP: {e}")
             return None
 
     def process_dns_request(self, data, client_address, dns_socket):
@@ -119,14 +135,14 @@ class Api:
     def start_dns(self):
         self._dns_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._dns_socket.bind((self._local_ip, 53))
-        print(f"UDP proxy listening on {self._local_ip}:53")
+        logging.error(f"UDP proxy listening on {self._local_ip}:53")
         while True:
             try:
                 data, client_address = self._dns_socket.recvfrom(512)
                 client_thread = threading.Thread(target=self.process_dns_request, args=(data, client_address, self._dns_socket))
                 client_thread.start()
             except Exception as error:
-                print(f"DNS server error: {error}")
+                logging.error(f"DNS server error: {error}")
 
     def set_window(self, window):
         self._window = window
@@ -136,7 +152,7 @@ class Api:
         try:
             response = requests.get(f"https://{API_DOMAIN}/get_user?token=" + self._token)
         except Exception as error:
-            print(f"Failed to get user data: {error}")
+            logging.error(f"Failed to get user data: {error}")
         
         success = False
         if response:
@@ -158,40 +174,40 @@ class Api:
     def toggle_proxy(self):
         running = self.check_proxy_status()
         # Kill Proxy (even if it's not running, to make sure we can run):
-        print("Killing Proxy...")
+        logging.info("Killing Proxy...")
         subprocess.call(['taskkill', '/IM', 'http_proxy.exe', '/T', '/F'], close_fds=True, creationflags=134217728, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         if running:
             local_ip = ""
 
             # Restore system DNS servers:
-            print("Restoring system DNS servers...")
+            logging.info("Restoring system DNS servers...")
             for network in self._dns_backup:
                 if len(self._dns_backup[network]) > 1:
                     configure_network_dns("change", network, self._dns_backup[network])
                 else:
                     configure_network_dns("clear", network)
         else:
-            print("Starting Service...")
+            logging.info("Starting Service...")
             token = self._token
             cache_ip = self._cache_ip
             local_ip = self._local_ip = self.get_default_interface_ip()
             local_ip_bytes = self._local_ip_bytes = socket.inet_aton(local_ip)
 
             # Run Proxy:
-            print("Starting Proxy...")
+            logging.info("Starting Proxy...")
             if not self._proxy_log_file:
                 self._proxy_log_file = open('proxy.log', 'a')
             self._proxy_process = subprocess.Popen(f"\"{PROXY_EXEC_PATH}\" --mode reverse:http://{CACHE_DOMAIN}@{local_ip}:80 --mode reverse:tcp://{cache_ip}:443@{local_ip}:443 --set keep_host_header=true --set allow_hosts={CACHE_DOMAIN} -s \"{PROXY_ADDON_PATH}\" --set token={token} --set termlog_verbosity=warn --set flow_detail=0 --set stream_large_bodies=100k", close_fds=True, creationflags=134217728, stdout=self._proxy_log_file, stderr=self._proxy_log_file)
 
             # Run DNS reverse proxy:
-            print("Starting DNS server...")
+            logging.info("Starting DNS server...")
             if not self._dns_thread:
                 dns_thread = self._dns_thread = threading.Thread(target=self.start_dns, daemon=True)
                 dns_thread.start()
 
             # Change system DNS servers:
-            print("Changing system DNS servers...")
+            logging.info("Changing system DNS servers...")
             dns_backup = self._dns_backup = get_all_networks_and_dns_servers()
             for network in dns_backup:
                 configure_network_dns("change", network, (local_ip, "1.1.1.1"))
@@ -206,7 +222,7 @@ class Api:
             return False
 
     def get_user_data(self):
-        print("User Data:", self._user_data)
+        logging.info("User Data: " + str(self._user_data))
         return self._user_data
 
     def get_rx(self):
@@ -238,7 +254,10 @@ if __name__ == '__main__':
         update_thread.start()
 
         window = webview.create_window(WINDOW_TITLE, UPDATE_PATH, width=300,height=210,js_api=api, frameless=True)
-        webview.start()
+        try:
+            webview.start(gui="edgehtml")
+        except:
+            webview.start(gui="edgechromium")
         sys.exit()
     elif os.path.isfile("steamdl_installer.exe"):
         os.remove("steamdl_installer.exe")
@@ -256,7 +275,10 @@ if __name__ == '__main__':
         window = webview.create_window(WINDOW_TITLE, FORM_PATH, width=400,height=600,js_api=api, frameless=True)
         api.set_window(window)
 
-    webview.start()
+    try:
+        webview.start(gui="edgehtml")
+    except:
+        webview.start(gui="edgechromium")
 
     # Quit:
     if api.check_proxy_status():
