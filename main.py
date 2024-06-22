@@ -149,14 +149,14 @@ class Api:
 
     def submit_token(self, token, change_window = True):
         self._token = token
+        success = False
         try:
             response = requests.get(f"https://{API_DOMAIN}/get_user?token=" + self._token)
+            if response:
+                success = bool(response.status_code == 200)
         except Exception as error:
             logging.error(f"Failed to get user data: {error}")
         
-        success = False
-        if response:
-            success = bool(response.status_code == 200)
 
         if not success:
             if self._window:
@@ -171,8 +171,10 @@ class Api:
         if change_window:
             self._window.load_url(INDEX_PATH)
 
-    def toggle_proxy(self):
-        running = self.check_proxy_status()
+    def toggle_proxy(self, running=None):
+        if running == None:
+            running = self.check_proxy_status()
+
         # Kill Proxy (even if it's not running, to make sure we can run):
         logging.info("Killing Proxy...")
         subprocess.call(['taskkill', '/IM', 'http_proxy.exe', '/T', '/F'], close_fds=True, creationflags=134217728, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -217,7 +219,11 @@ class Api:
 
     def check_proxy_status(self):
         if self._proxy_process:
-            return self._proxy_process.poll() == None
+            if self._proxy_process.poll() == None and self.get_default_interface_ip() == self._local_ip:
+                return True
+            elif self._proxy_process.poll() == None:
+                self.toggle_proxy(True)
+                return False
         else:
             return False
 
