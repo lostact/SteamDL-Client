@@ -11,11 +11,9 @@ logging.basicConfig(
     ]
 )
 
-# Function to log uncaught exceptions
+# log uncaught exceptions
 def log_uncaught_exceptions(exctype, value, tb):
     logging.error("Uncaught exception", exc_info=(exctype, value, tb))
-
-# Assign the function to sys.excepthook
 sys.excepthook = log_uncaught_exceptions
 
 def resource_path(relative_path):
@@ -108,6 +106,7 @@ class Api:
         self._local_ip_bytes = None
 
         self._proxy_process = None
+        self._dns_running = None
         self._proxy_log_file = None
         self._dns_thread = None
         self._dns_backup = None
@@ -133,16 +132,23 @@ class Api:
             dns_socket.sendto(bytes(response_data), client_address)
 
     def start_dns(self):
-        self._dns_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self._dns_socket.bind((self._local_ip, 53))
-        logging.error(f"UDP proxy listening on {self._local_ip}:53")
-        while True:
+        dns_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        dns_socket.bind((self._local_ip, 53))
+        dns_socket.settimeout(1)
+
+        logging.info(f"DNS server listening on {self._local_ip}:53")
+        while self._dns_running:
             try:
-                data, client_address = self._dns_socket.recvfrom(512)
-                client_thread = threading.Thread(target=self.process_dns_request, args=(data, client_address, self._dns_socket))
+                data, client_address = dns_socket.recvfrom(512)
+                client_thread = threading.Thread(target=self.process_dns_request, args=(data, client_address, dns_socket))
                 client_thread.start()
+            except socket.timeout:
+                pass
             except Exception as error:
                 logging.error(f"DNS server error: {error}")
+
+        dns_socket.close()
+        logging.info("DNS server stopped.")
 
     def set_window(self, window):
         self._window = window
@@ -172,15 +178,18 @@ class Api:
             self._window.load_url(INDEX_PATH)
 
     def toggle_proxy(self, running=None):
+        local_ip = ""
+
         if running == None:
             running = self.check_proxy_status()
 
-        # Kill Proxy (even if it's not running, to make sure we can run):
+        # Kill Proxy (even if we think it isn't running, to make sure we can run it again):
         logging.info("Killing Proxy...")
         subprocess.call(['taskkill', '/IM', 'http_proxy.exe', '/T', '/F'], close_fds=True, creationflags=134217728, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         if running:
-            local_ip = ""
+            # Kill DNS:
+            self._dns_running = False
 
             # Restore system DNS servers:
             logging.info("Restoring system DNS servers...")
@@ -190,7 +199,6 @@ class Api:
                 else:
                     configure_network_dns("clear", network)
         else:
-            logging.info("Starting Service...")
             token = self._token
             cache_ip = self._cache_ip
             local_ip = self._local_ip = self.get_default_interface_ip()
@@ -204,9 +212,12 @@ class Api:
 
             # Run DNS reverse proxy:
             logging.info("Starting DNS server...")
-            if not self._dns_thread:
+            if not self._dns_running:
+                self._dns_running = True
                 dns_thread = self._dns_thread = threading.Thread(target=self.start_dns, daemon=True)
                 dns_thread.start()
+            else:
+                print(self._dns_thread)
 
             # Change system DNS servers:
             logging.info("Changing system DNS servers...")
