@@ -135,6 +135,7 @@ class Api:
         dns_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         dns_socket.bind((self._local_ip, 53))
         dns_socket.settimeout(1)
+        self._dns_running = True
 
         logging.info(f"DNS server listening on {self._local_ip}:53")
         while self._dns_running:
@@ -213,7 +214,6 @@ class Api:
             # Run DNS reverse proxy:
             logging.info("Starting DNS server...")
             if not self._dns_running:
-                self._dns_running = True
                 dns_thread = self._dns_thread = threading.Thread(target=self.start_dns, daemon=True)
                 dns_thread.start()
             else:
@@ -230,10 +230,12 @@ class Api:
 
     def check_proxy_status(self):
         if self._proxy_process:
-            if self._proxy_process.poll() == None and self.get_default_interface_ip() == self._local_ip:
+            if self._proxy_process.poll() == None and self.get_default_interface_ip() == self._local_ip and self._dns_running:
                 return True
             elif self._proxy_process.poll() == None:
                 self.toggle_proxy(True)
+                return False
+            else:
                 return False
         else:
             return False
