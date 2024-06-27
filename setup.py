@@ -4,6 +4,7 @@ build_exe_options = {
     "build_exe": "dist/steamdl",
     "include_files": "assets",
     "excludes": ["tkinter", "PyQt5", "webview.platforms.android", "webview.platforms.cocoa"],
+    "replace_paths": [("*", "")]
 }
 
 cx_Freeze.setup(
