@@ -9,12 +9,13 @@ class SteamDL:
         domain_start = mode_string.find("//") + 2
         self.cache_domain = mode_string[domain_start:].split("@")[0]
         self.last_update_time = 0
+        self.rx_bytes = 0
         try:
             if os.path.isfile("rx.txt"):
                 with open("rx.txt", 'r') as rx_file:
                     self.rx_bytes = int(rx_file.read().strip())
         except:
-            self.rx_bytes = 0
+            pass
         
     def requestheaders(self, flow):
         if flow.request.method == "GET":

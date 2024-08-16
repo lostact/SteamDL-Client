@@ -39,7 +39,7 @@ def configure_network_dns(action, network_name, dns_servers=None):
     network = wmi_service.Win32_NetworkAdapterConfiguration(IPEnabled=True, Description=network_name)[0]
     network.SetDNSServerSearchOrder(dns_servers) if action == "change" else network.SetDNSServerSearchOrder()
 
-CURRENT_VERSION = "1.1.4"
+CURRENT_VERSION = "1.2.0"
 WINDOW_TITLE = "SteamDL v{}".format(CURRENT_VERSION)
 GITHUB_RELEASE_URL = "https://github.com/lostact/SteamDL-Client/releases/latest/download/steamdl_installer.exe"
 
@@ -54,7 +54,7 @@ FORM_PATH = resource_path('assets/web/form.html')
 UPDATE_PATH = resource_path('assets/web/update.html')
 
 SEARCH_IP_BYTES = socket.inet_aton("127.0.0.1")
-
+ANTI_SANCTION_DNS = "78.157.42.100"
 def check_for_update():
     try:
         response = requests.head(GITHUB_RELEASE_URL, allow_redirects=False)
@@ -129,7 +129,12 @@ class Api:
             start = response_data.find(SEARCH_IP_BYTES)
             if start != -1:
                 response_data[start:start+len(SEARCH_IP_BYTES)] = self._local_ip_bytes
-            dns_socket.sendto(bytes(response_data), client_address)
+                response_data_bytes = bytes(response_data)
+            else:
+                with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as upstream_socket_second:
+                    upstream_socket_second.sendto(data, (ANTI_SANCTION_DNS, 53))
+                    response_data_bytes, _ = upstream_socket_second.recvfrom(512)
+            dns_socket.sendto(response_data_bytes, client_address)
 
     def start_dns(self):
         dns_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
