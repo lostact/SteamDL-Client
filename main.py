@@ -39,7 +39,7 @@ def configure_network_dns(action, network_name, dns_servers=None):
     network = wmi_service.Win32_NetworkAdapterConfiguration(IPEnabled=True, Description=network_name)[0]
     network.SetDNSServerSearchOrder(dns_servers) if action == "change" else network.SetDNSServerSearchOrder()
 
-CURRENT_VERSION = "1.1.3"
+CURRENT_VERSION = "1.1.4"
 WINDOW_TITLE = "SteamDL v{}".format(CURRENT_VERSION)
 GITHUB_RELEASE_URL = "https://github.com/lostact/SteamDL-Client/releases/latest/download/steamdl_installer.exe"
 
@@ -62,7 +62,7 @@ def check_for_update():
 
         latest_version = redirect_url.split('/')[-2]
         current_tuple, latest_tuple = tuple(map(int, (CURRENT_VERSION.split(".")))), tuple(map(int, (latest_version.split("."))))
-        logging.info(str(current_tuple) +  str(latest_tuple))
+        logging.info("current version: " + CURRENT_VERSION + " - latest version: " + latest_version)
         if latest_tuple and latest_tuple > current_tuple:
             return True, redirect_url
         return False, None
@@ -157,17 +157,24 @@ class Api:
     def submit_token(self, token, change_window = True):
         self._token = token
         success = False
+        user_data = {}
         try:
             response = requests.get(f"https://{API_DOMAIN}/get_user?token=" + self._token)
-            if response:
-                success = bool(response.status_code == 200)
+            success = bool(response.status_code == 200)
+            user_data = json.loads(response.content)
         except Exception as error:
             logging.error(f"Failed to get user data: {error}")
         
 
         if not success:
             if self._window:
-                self._window.evaluate_js("document.getElementById('error').style.display = 'block';")
+                if user_data.get('status') == 'inactive':
+                    expired = True
+                    subscription_id = user_data["subscription_id"]
+                    self._window.evaluate_js("document.getElementById('renew-link').setAttribute('href', 'https://steamdl.ir/my-account/view-subscription/{}/');".format(subscription_id))
+                    self._window.evaluate_js("document.getElementById('expired').style.display = 'block';")
+                else:
+                    self._window.evaluate_js("document.getElementById('error').style.display = 'block';")
             return
 
         self._user_data = json.loads(response.content)
@@ -184,7 +191,7 @@ class Api:
         if running == None:
             running = self.check_proxy_status()
 
-        # Kill Proxy (even if we think it isn't running, to make sure we can run it again):
+        # Kill Proxy (even if we think it isn't running, ensure that we can run it):
         logging.info("Killing Proxy...")
         subprocess.call(['taskkill', '/IM', 'http_proxy.exe', '/T', '/F'], close_fds=True, creationflags=134217728, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
@@ -234,23 +241,21 @@ class Api:
                 return True
             elif self._proxy_process.poll() == None:
                 self.toggle_proxy(True)
-                return False
-            else:
-                return False
-        else:
-            return False
+        return False
 
     def get_user_data(self):
         logging.info("User Data: " + str(self._user_data))
         return self._user_data
 
     def get_rx(self):
-        if os.path.isfile('rx.txt'):
-            with open('rx.txt', 'r') as rx_file:
-                rx = int(rx_file.read().strip())
-                return rx
-        else:
-            return 0
+        try:
+            if os.path.isfile('rx.txt'):
+                with open('rx.txt', 'r') as rx_file:
+                    rx = int(rx_file.read().strip())
+                    return rx
+        except Exception as e:
+            logging.error(f"Failed to read rx: {e}")
+        return 0
 
     def minimize(self):
         self._window.minimize()
@@ -273,30 +278,27 @@ if __name__ == '__main__':
         update_thread.start()
 
         window = webview.create_window(WINDOW_TITLE, UPDATE_PATH, width=300,height=210,js_api=api, frameless=True)
-        try:
-            webview.start(gui="edgehtml")
-        except:
-            webview.start(gui="edgechromium")
-        sys.exit()
-    elif os.path.isfile("steamdl_installer.exe"):
-        os.remove("steamdl_installer.exe")
-
-    if os.path.isfile("account.txt"):
-        with open("account.txt", "r") as account_file:
-            token = account_file.read().strip()
-            if token:
-                api.submit_token(token, False)
-
-    if api._user_data:
-        window = webview.create_window(WINDOW_TITLE, INDEX_PATH, width=400,height=600,js_api=api, frameless=True)
-        api.set_window(window) 
     else:
-        window = webview.create_window(WINDOW_TITLE, FORM_PATH, width=400,height=600,js_api=api, frameless=True)
-        api.set_window(window)
+        if os.path.isfile("steamdl_installer.exe"):
+            os.remove("steamdl_installer.exe")
+
+        if os.path.isfile("account.txt"):
+            with open("account.txt", "r") as account_file:
+                token = account_file.read().strip()
+                if token:
+                    api.submit_token(token, False)
+
+        if api._user_data:
+            window = webview.create_window(WINDOW_TITLE, INDEX_PATH, width=400,height=600,js_api=api, frameless=True)
+            api.set_window(window) 
+        else:
+            window = webview.create_window(WINDOW_TITLE, FORM_PATH, width=400,height=600,js_api=api, frameless=True)
+            api.set_window(window)
 
     try:
         webview.start(gui="edgehtml")
-    except:
+    except Exception as e:
+        logging.error(f"Failed to use edgehtml: {e}, using edgechromium...")
         webview.start(gui="edgechromium")
 
     # Quit:

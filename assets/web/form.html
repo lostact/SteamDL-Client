@@ -125,7 +125,7 @@
     /*transform: rotateZ(90deg);*/
     background: #0052cc;
   }
-  #error
+  #error, #expired
   {
     display: none;
     color: red;
@@ -141,7 +141,8 @@
     <label for="token-input">توکن خود را وارد کنید:</label>
     <textarea rows="6" id="token_input" name="account_token"></textarea>
     <input type="submit" id="submit_button" value="ثبت">
-    <span id="error">خطا: توکن نادرست است یا اتصال اینترنت برقرار نیست.</span>
+    <span id="error">خطا: توکن نا معتبر است یا اتصال اینترنت برقرار نیست.</span>
+    <span id="expired">خطا: اشتراک شما به اتمام رسیده است.<br> برای تمدید آن وارد <a id="renew-link" href="#" target="_blank">این لینک</a> شوید و دکمه پرداخت را بزنید.</span>
   </form>
   </div>
 </div>
