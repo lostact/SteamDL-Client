@@ -39,12 +39,13 @@ def configure_network_dns(action, network_name, dns_servers=None):
     network = wmi_service.Win32_NetworkAdapterConfiguration(IPEnabled=True, Description=network_name)[0]
     network.SetDNSServerSearchOrder(dns_servers) if action == "change" else network.SetDNSServerSearchOrder()
 
-CURRENT_VERSION = "1.2.0"
+CURRENT_VERSION = "1.2.1"
 WINDOW_TITLE = "SteamDL v{}".format(CURRENT_VERSION)
 GITHUB_RELEASE_URL = "https://github.com/lostact/SteamDL-Client/releases/latest/download/steamdl_installer.exe"
 
 CACHE_DOMAIN = "dl.steamdl.ir"
 API_DOMAIN = "api.steamdl.ir"
+FILES_DOMAIN = "files.steamdl.ir"
 
 PROXY_EXEC_PATH = resource_path('assets/http_proxy.exe')
 PROXY_ADDON_PATH = resource_path('assets/addon.py')
@@ -54,7 +55,7 @@ FORM_PATH = resource_path('assets/web/form.html')
 UPDATE_PATH = resource_path('assets/web/update.html')
 
 SEARCH_IP_BYTES = socket.inet_aton("127.0.0.1")
-ANTI_SANCTION_DNS = "78.157.42.100"
+
 def check_for_update():
     try:
         response = requests.head(GITHUB_RELEASE_URL, allow_redirects=False)
@@ -100,10 +101,12 @@ class Api:
         self._window = None
         self._token = None
         self._user_data = None
+        self._anti_sanction_data = None
 
         self._cache_ip = None
         self._local_ip = None
         self._local_ip_bytes = None
+        self._anti_sanction_dns = None
 
         self._proxy_process = None
         self._dns_running = None
@@ -121,6 +124,19 @@ class Api:
             logging.error(f"Error obtaining default interface IP: {e}")
             return None
 
+    def get_anti_sanction_data(self):
+        try:
+            response = requests.get(f"https://{FILES_DOMAIN}/anti_sanction_dns.json")
+            if response:
+                self._anti_sanction_data = json.loads(response.content)
+                self._anti_sanction_dns = self._anti_sanction_data[0]['ip']
+                return self._anti_sanction_data
+        except Exception as error:
+            logging.error(f"Failed to get anti sanction data: {error}")
+
+    def change_anti_sanction(self, anti_sanction_index):
+        self._anti_sanction_dns = self._anti_sanction_data[int(anti_sanction_index)]["ip"]
+
     def process_dns_request(self, data, client_address, dns_socket):
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as upstream_socket:
             upstream_socket.sendto(data, (self._cache_ip, 53))
@@ -130,9 +146,9 @@ class Api:
             if start != -1:
                 response_data[start:start+len(SEARCH_IP_BYTES)] = self._local_ip_bytes
                 response_data_bytes = bytes(response_data)
-            else:
+            elif self._anti_sanction_dns != self._cache_ip:
                 with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as upstream_socket_second:
-                    upstream_socket_second.sendto(data, (ANTI_SANCTION_DNS, 53))
+                    upstream_socket_second.sendto(data, (self._anti_sanction_dns, 53))
                     response_data_bytes, _ = upstream_socket_second.recvfrom(512)
             dns_socket.sendto(response_data_bytes, client_address)
 
@@ -294,10 +310,10 @@ if __name__ == '__main__':
                     api.submit_token(token, False)
 
         if api._user_data:
-            window = webview.create_window(WINDOW_TITLE, INDEX_PATH, width=400,height=600,js_api=api, frameless=True)
+            window = webview.create_window(WINDOW_TITLE, INDEX_PATH, width=400,height=620,js_api=api, frameless=True)
             api.set_window(window) 
         else:
-            window = webview.create_window(WINDOW_TITLE, FORM_PATH, width=400,height=600,js_api=api, frameless=True)
+            window = webview.create_window(WINDOW_TITLE, FORM_PATH, width=400,height=620,js_api=api, frameless=True)
             api.set_window(window)
 
     try:

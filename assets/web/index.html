@@ -354,6 +354,64 @@
   {
     direction: rtl;
   }
+  .custom-select {
+    font-family: "Vazirmatn", sans-serif;
+    padding: 4px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    color: #333;
+    outline: none;
+    appearance:none;
+    line-height: 1.5;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .custom-select:focus {
+      border-color: #007bff;
+      box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  }
+
+  .custom-select[multiple] {
+      height: auto;
+      max-height: 200px;
+      overflow-y: auto;
+  }
+
+  /* Scrollbar styles */
+  .custom-select[multiple]::-webkit-scrollbar {
+      width: 8px;
+  }
+
+  .custom-select[multiple]::-webkit-scrollbar-thumb {
+      background-color: #007bff;
+      border-radius: 4px;
+  }
+
+  .custom-select[multiple]::-webkit-scrollbar-thumb:hover {
+      background-color: #0056b3;
+  }
+
+  .custom-select[multiple]::-webkit-scrollbar-track {
+      background-color: #e9ecef;
+      border-radius: 4px;
+  }
+
+  option {
+      padding: 8px;
+      background-color: #fff;
+      color: #333;
+  }
+
+  option:checked {
+      background-color: #007bff;
+      color: #fff;
+  }
+
+  option:hover {
+      background-color: #e9ecef;
+  }
   </style>
   <div id='version'></div>
 </head>
@@ -370,6 +428,7 @@
       <span class="row"><h2 class="profile-card__bio-title">حجم کل:</h2> <span id="total_traffic">∞</span></span>
       <span class="row"><h2 class="profile-card__bio-title">زمان باقیمانده:</h2> <span id="expiry_date"></span></span>
       <span class="row"><h2 class="profile-card__bio-title">آی پی محلی:</h2> <span id="local_ip"></span></span>
+      <span class="row"><h2 class="profile-card__bio-title">ضد تحریم:</h2> <select name="dns_select" id="dns_select" class="custom-select"></select></span>
 <!--       <div class='progressBarContainer'>
         <div class='progressBar'>
           <div class='progressBarRect'>
@@ -404,6 +463,21 @@
        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
     }
 
+    function adjustWidth(element) {
+        const selectedOption = element.options[element.selectedIndex].text;
+        const tempElement = document.createElement('span');
+        tempElement.style.visibility = 'hidden';
+        tempElement.style.whiteSpace = 'nowrap';
+        tempElement.style.font = window.getComputedStyle(element).font;
+        tempElement.innerText = selectedOption;
+        
+        document.body.appendChild(tempElement);
+        const width = tempElement.offsetWidth + 12;
+        document.body.removeChild(tempElement);
+
+        element.style.width = width + 'px';
+    }
+
     function check_proxy_status()
     {
       pywebview.api.check_proxy_status().then(function(running) {
@@ -433,6 +507,17 @@
     }
 
     window.addEventListener('pywebviewready', function() {
+      dns_select = document.getElementById('dns_select');
+      pywebview.api.get_anti_sanction_data().then(function(data) {
+        for (var i = 0; i < data.length; i++)
+        {
+          option = document.createElement('option');
+          option.value = i;
+          option.innerHTML = data[i]["persian_name"];
+          dns_select.appendChild(option);
+        }
+      });
+
       check_proxy_status();
       check_interval = setInterval(check_proxy_status, 1001);
 
@@ -472,8 +557,14 @@
     $('.btn.close').click(function(){
       pywebview.api.close();
     });
+
     $('.btn.min').click(function(){
       pywebview.api.minimize();
+    });
+
+    $('#dns_select').change(function(){
+      pywebview.api.change_anti_sanction(this.value);
+      adjustWidth(this);
     });
   </script>
 </html>
