@@ -1,4 +1,4 @@
-import sys, os, requests, json, subprocess, threading, socket, wmi, webview, logging
+import sys, os, requests, json, subprocess, threading, socket, wmi, webview, logging, signal, time
 
 # Configure logging
 log_file = 'app.log'
@@ -39,7 +39,18 @@ def configure_network_dns(action, network_name, dns_servers=None):
     network = wmi_service.Win32_NetworkAdapterConfiguration(IPEnabled=True, Description=network_name)[0]
     network.SetDNSServerSearchOrder(dns_servers) if action == "change" else network.SetDNSServerSearchOrder()
 
-CURRENT_VERSION = "1.2.1"
+def cleanup_temp_folders():
+    temp_dir = os.environ.get('TEMP')
+    if temp_dir:
+        for folder_name in os.listdir(temp_dir):
+            folder_path = os.path.join(temp_dir, folder_name)
+            if os.path.isdir(folder_path) and "EBWebView" in os.listdir(folder_path):
+                try:
+                    subprocess.run(['rmdir', '/S', '/Q', folder_path], shell=True, check=True)
+                except subprocess.CalledProcessError as e:
+                    logging.info(f"Failed to remove webview temp files in {folder_path}: {e}")
+
+CURRENT_VERSION = "1.2.2"
 WINDOW_TITLE = "SteamDL v{}".format(CURRENT_VERSION)
 GITHUB_RELEASE_URL = "https://github.com/lostact/SteamDL-Client/releases/latest/download/steamdl_installer.exe"
 
@@ -212,11 +223,14 @@ class Api:
         if running == None:
             running = self.check_proxy_status()
 
-        # Kill Proxy (even if we think it isn't running, ensure that we can run it):
-        logging.info("Killing Proxy...")
-        subprocess.call(['taskkill', '/IM', 'http_proxy.exe', '/T', '/F'], close_fds=True, creationflags=134217728, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-
         if running:
+            # Kill proxy:
+            logging.info("Killing Proxy...")
+            try:
+                self._proxy_process.send_signal(signal.CTRL_BREAK_EVENT)
+            except Exception as e:
+                logging.info(f"Failed to kill proxy: {e}")
+
             # Kill DNS:
             self._dns_running = False
 
@@ -237,7 +251,7 @@ class Api:
             logging.info("Starting Proxy...")
             if not self._proxy_log_file:
                 self._proxy_log_file = open('proxy.log', 'a')
-            self._proxy_process = subprocess.Popen(f"\"{PROXY_EXEC_PATH}\" --mode reverse:http://{CACHE_DOMAIN}@{local_ip}:80 --mode reverse:tcp://{cache_ip}:443@{local_ip}:443 --set keep_host_header=true --set allow_hosts={CACHE_DOMAIN} -s \"{PROXY_ADDON_PATH}\" --set token={token} --set termlog_verbosity=warn --set flow_detail=0 --set stream_large_bodies=100k", close_fds=True, creationflags=134217728, stdout=self._proxy_log_file, stderr=self._proxy_log_file)
+            self._proxy_process = subprocess.Popen(f"\"{PROXY_EXEC_PATH}\" --mode reverse:http://{CACHE_DOMAIN}@{local_ip}:80 --mode reverse:tcp://{cache_ip}:443@{local_ip}:443 --set keep_host_header=true --set allow_hosts={CACHE_DOMAIN} -s \"{PROXY_ADDON_PATH}\" --set token={token} --set termlog_verbosity=warn --set flow_detail=0 --set stream_large_bodies=100k", close_fds=True, creationflags=subprocess.CREATE_NEW_PROCESS_GROUP, stdout=self._proxy_log_file, stderr=self._proxy_log_file)
 
             # Run DNS reverse proxy:
             logging.info("Starting DNS server...")
@@ -310,6 +324,7 @@ if __name__ == '__main__':
                     api.submit_token(token, False)
 
         if api._user_data:
+            subprocess.call(['taskkill', '/IM', 'http_proxy.exe', '/T', '/F'], close_fds=True, creationflags=134217728, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             window = webview.create_window(WINDOW_TITLE, INDEX_PATH, width=400,height=620,js_api=api, frameless=True)
             api.set_window(window) 
         else:
@@ -321,9 +336,11 @@ if __name__ == '__main__':
     except Exception as e:
         logging.error(f"Failed to use edgehtml: {e}, using edgechromium...")
         webview.start(gui="edgechromium")
+    finally:
+        # Quit:
+        time.sleep(0.5)
+        cleanup_temp_folders()
+        if api.check_proxy_status():
+            api.toggle_proxy()
 
-    # Quit:
-    if api.check_proxy_status():
-        api.toggle_proxy()
-
-    sys.exit()
+        sys.exit()
