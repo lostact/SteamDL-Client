@@ -50,7 +50,7 @@ def cleanup_temp_folders():
                 except subprocess.CalledProcessError as e:
                     logging.info(f"Failed to remove webview temp files in {folder_path}: {e}")
 
-CURRENT_VERSION = "1.2.2"
+CURRENT_VERSION = "1.2.3"
 WINDOW_TITLE = "SteamDL v{}".format(CURRENT_VERSION)
 GITHUB_RELEASE_URL = "https://github.com/lostact/SteamDL-Client/releases/latest/download/steamdl_installer.exe"
 
@@ -181,6 +181,7 @@ class Api:
                 logging.error(f"DNS server error: {error}")
 
         dns_socket.close()
+        self._dns_running = False
         logging.info("DNS server stopped.")
 
     def set_window(self, window):
@@ -272,9 +273,15 @@ class Api:
 
     def check_proxy_status(self):
         if self._proxy_process:
-            if self._proxy_process.poll() == None and self.get_default_interface_ip() == self._local_ip and self._dns_running:
+            old_ip = self._local_ip
+            new_ip = self.get_default_interface_ip()
+            if self._proxy_process.poll() == None and old_ip == new_ip and self._dns_running:
                 return True
             elif self._proxy_process.poll() == None:
+                if not self._dns_running:
+                    logging.info("DNS server is not running, killing proxy...")
+                else:
+                    logging.info(f"Default interface ip has changed, old ip: {old_ip} - new ip: {new_ip}. killing proxy...")
                 self.toggle_proxy(True)
         return False
 
