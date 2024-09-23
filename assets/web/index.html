@@ -356,6 +356,7 @@
   }
   .custom-select {
     font-family: "Vazirmatn", sans-serif;
+    width: 10px;
     padding: 4px;
     border-radius: 4px;
     border: 1px solid #ccc;
@@ -428,7 +429,8 @@
       <span class="row"><h2 class="profile-card__bio-title">حجم کل:</h2> <span id="total_traffic">∞</span></span>
       <span class="row"><h2 class="profile-card__bio-title">زمان باقیمانده:</h2> <span id="expiry_date"></span></span>
       <span class="row"><h2 class="profile-card__bio-title">آی پی محلی:</h2> <span id="local_ip"></span></span>
-      <span class="row"><h2 class="profile-card__bio-title">ضد تحریم:</h2> <select name="dns_select" id="dns_select" class="custom-select"></select></span>
+      <span class="row"><h2 class="profile-card__bio-title">سرور دانلود:</h2> <span id="download_server">استیم دی ال</span></span>
+      <span class="row"><h2 class="profile-card__bio-title">ضد تحریم:</h2> <select name="dns_select" id="dns_select" class="custom-select"><option value="0">خودکار</option></select></span>
 <!--       <div class='progressBarContainer'>
         <div class='progressBar'>
           <div class='progressBarRect'>
@@ -472,7 +474,7 @@
         tempElement.innerText = selectedOption;
         
         document.body.appendChild(tempElement);
-        const width = tempElement.offsetWidth + 12;
+        const width = tempElement.offsetWidth + 10;
         document.body.removeChild(tempElement);
 
         element.style.width = width + 'px';
@@ -512,7 +514,7 @@
         for (var i = 0; i < data.length; i++)
         {
           option = document.createElement('option');
-          option.value = i;
+          option.value = i + 1;
           option.innerHTML = data[i]["persian_name"];
           dns_select.appendChild(option);
         }
@@ -544,12 +546,17 @@
       pywebview.api.get_version().then(function(version) {
         $("#version").text("v" + version);
       });
+      adjustWidth(document.getElementById('dns_select'));
     })
     
     $('.power-button').click(function() {
       pywebview.api.check_proxy_status().then(function(running) {
         pywebview.api.toggle_proxy().then(function(local_ip) {
           $("#local_ip").text(local_ip);
+          if ($('#dns_select').val() == "0")
+          {
+            pywebview.api.test_anti_sanction();
+          }
         });
       });
     });

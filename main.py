@@ -1,5 +1,10 @@
 import sys, os, requests, json, subprocess, threading, socket, wmi, webview, logging, signal, time
 
+import ctypes
+from ctypes import wintypes
+import dns.resolver
+from forcediphttpsadapter.adapters import ForcedIPHTTPSAdapter
+
 # Configure logging
 log_file = 'app.log'
 logging.basicConfig(
@@ -50,8 +55,8 @@ def cleanup_temp_folders():
                 except subprocess.CalledProcessError as e:
                     logging.info(f"Failed to remove webview temp files in {folder_path}: {e}")
 
-CURRENT_VERSION = "1.2.3"
-WINDOW_TITLE = "SteamDL v{}".format(CURRENT_VERSION)
+CURRENT_VERSION = "1.2.4"
+WINDOW_TITLE = f"SteamDL v{CURRENT_VERSION}"
 GITHUB_RELEASE_URL = "https://github.com/lostact/SteamDL-Client/releases/latest/download/steamdl_installer.exe"
 
 CACHE_DOMAIN = "dl.steamdl.ir"
@@ -66,6 +71,11 @@ FORM_PATH = resource_path('assets/web/form.html')
 UPDATE_PATH = resource_path('assets/web/update.html')
 
 SEARCH_IP_BYTES = socket.inet_aton("127.0.0.1")
+ANTI_SANCTION_TEST_DOMAIN = "www.epicgames.com"
+ANTI_SANCTION_TEST_PATH = "/id/api/authenticate"
+
+# ANTI_SANCTION_TEST_DOMAIN = "packages.gitlab.com"
+# ANTI_SANCTION_TEST_PATH = "/gitlab/gitlab-ce/packages/el/7/gitlab-ce-16.8.0-ce.0.el7.x86_64.rpm/download.rpm"
 
 def check_for_update():
     try:
@@ -146,7 +156,33 @@ class Api:
             logging.error(f"Failed to get anti sanction data: {error}")
 
     def change_anti_sanction(self, anti_sanction_index):
-        self._anti_sanction_dns = self._anti_sanction_data[int(anti_sanction_index)]["ip"]
+        self._anti_sanction_dns = self._anti_sanction_data[int(anti_sanction_index) - 1]["ip"]
+
+    def test_anti_sanction(self):
+        successful_resolutions = {}
+        custom_resolver = dns.resolver.Resolver()
+        for index,anti_sanction_dns in enumerate(self._anti_sanction_data):
+            successful_resolutions[anti_sanction_dns["name"]] = False
+            dns_ip = anti_sanction_dns["ip"]
+            custom_resolver.nameservers = [dns_ip]
+            try:
+                destination_ip = str(custom_resolver.resolve(ANTI_SANCTION_TEST_DOMAIN, 'A')[0])
+                self._anti_sanction_dns = dns_ip
+                url = f"https://{ANTI_SANCTION_TEST_DOMAIN}{ANTI_SANCTION_TEST_PATH}"
+                command = f"curl --resolve {ANTI_SANCTION_TEST_DOMAIN}:443:{destination_ip} {url}  -H \"User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0\" -f -s -o nul"
+                process = subprocess.run(command, capture_output=True, text=True)
+                if process.returncode == 0:
+                    logging.info(f"Successfully connected to epic at {destination_ip} using {dns_ip})")
+                    successful_resolutions[anti_sanction_dns["name"]] = True
+                    self.change_anti_sanction(index)
+                    self._window.evaluate_js(f"document.getElementById('dns_select').value={index + 1};")
+                    return
+            except Exception as error:
+                logging.error(f"Failed to try dns server {anti_sanction_dns} with error: {error}")
+        logging.error("None of anti sanction servers worked, falling back to first one...")
+        self.change_anti_sanction(0)
+        self._window.evaluate_js("document.getElementById('dns_select').value=1;")
+       
 
     def process_dns_request(self, data, client_address, dns_socket):
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as upstream_socket:
@@ -204,7 +240,7 @@ class Api:
                 if user_data.get('status') == 'inactive':
                     expired = True
                     subscription_id = user_data["subscription_id"]
-                    self._window.evaluate_js("document.getElementById('renew-link').setAttribute('href', 'https://steamdl.ir/my-account/view-subscription/{}/');".format(subscription_id))
+                    self._window.evaluate_js(f"document.getElementById('renew-link').setAttribute('href', 'https://steamdl.ir/my-account/view-subscription/{subscription_id}/');")
                     self._window.evaluate_js("document.getElementById('expired').style.display = 'block';")
                 else:
                     self._window.evaluate_js("document.getElementById('error').style.display = 'block';")
@@ -267,7 +303,6 @@ class Api:
             dns_backup = self._dns_backup = get_all_networks_and_dns_servers()
             for network in dns_backup:
                 configure_network_dns("change", network, (local_ip, "1.1.1.1"))
-        
         return local_ip
 
 
@@ -331,15 +366,16 @@ if __name__ == '__main__':
                     api.submit_token(token, False)
 
         if api._user_data:
+            height = int(615 + (ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100) * 40)
             subprocess.call(['taskkill', '/IM', 'http_proxy.exe', '/T', '/F'], close_fds=True, creationflags=134217728, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            window = webview.create_window(WINDOW_TITLE, INDEX_PATH, width=400,height=620,js_api=api, frameless=True)
+            window = webview.create_window(WINDOW_TITLE, INDEX_PATH, width=400,height=height,js_api=api, frameless=True)
             api.set_window(window) 
         else:
             window = webview.create_window(WINDOW_TITLE, FORM_PATH, width=400,height=620,js_api=api, frameless=True)
             api.set_window(window)
 
     try:
-        webview.start(gui="edgehtml")
+        webview.start(gui="edgehtml",debug=True)
     except Exception as e:
         logging.error(f"Failed to use edgehtml: {e}, using edgechromium...")
         webview.start(gui="edgechromium")
@@ -351,3 +387,7 @@ if __name__ == '__main__':
             api.toggle_proxy()
 
         sys.exit()
+
+
+
+

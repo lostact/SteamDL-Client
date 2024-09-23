@@ -1,3 +1,4 @@
 pywebview
 wmi
 cx_freeze
+requests
