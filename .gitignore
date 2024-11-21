@@ -1,7 +1,7 @@
 /venv
 /dist
+/assets/_internal
 /freeze
 *.spec
 *.bat
 *.exe
-*.nsi

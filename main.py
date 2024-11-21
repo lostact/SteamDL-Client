@@ -1,4 +1,4 @@
-import sys, os, requests, json, subprocess, threading, socket, wmi, webview, logging, signal, time
+import sys, os, requests, json, subprocess, threading, socket, wmi, webview, logging, time
 
 import ctypes
 from ctypes import wintypes
@@ -49,13 +49,13 @@ def cleanup_temp_folders():
     if temp_dir:
         for folder_name in os.listdir(temp_dir):
             folder_path = os.path.join(temp_dir, folder_name)
-            if os.path.isdir(folder_path) and "EBWebView" in os.listdir(folder_path):
+            if os.path.isdir(folder_path) and ("EBWebView" in os.listdir(folder_path)):
                 try:
                     subprocess.run(['rmdir', '/S', '/Q', folder_path], shell=True, check=True)
                 except subprocess.CalledProcessError as e:
                     logging.info(f"Failed to remove webview temp files in {folder_path}: {e}")
 
-CURRENT_VERSION = "1.2.4"
+CURRENT_VERSION = "1.2.5"
 WINDOW_TITLE = f"SteamDL v{CURRENT_VERSION}"
 GITHUB_RELEASE_URL = "https://github.com/lostact/SteamDL-Client/releases/latest/download/steamdl_installer.exe"
 
@@ -111,7 +111,7 @@ def apply_update(download_url, progress_callback):
                         done = int(100 * dl / total_length)
                         progress_callback(done)
             logging.info("Downloading update finished.")
-            subprocess.Popen([installer_path, "/S"], close_fds=True, creationflags=subprocess.DETACHED_PROCESS|subprocess.CREATE_NEW_PROCESS_GROUP|subprocess.CREATE_NO_WINDOW)
+            subprocess.Popen([installer_path, "/S"], close_fds=True, creationflags=subprocess.DETACHED_PROCESS|subprocess.CREATE_NEW_PROCESS_GROUP)
             os._exit(0)
     except requests.RequestException as e:
         logging.error(f"Failed to apply update: {e}")
@@ -170,7 +170,7 @@ class Api:
                 self._anti_sanction_dns = dns_ip
                 url = f"https://{ANTI_SANCTION_TEST_DOMAIN}{ANTI_SANCTION_TEST_PATH}"
                 command = f"curl --resolve {ANTI_SANCTION_TEST_DOMAIN}:443:{destination_ip} {url}  -H \"User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0\" -f -s -o nul"
-                process = subprocess.run(command, capture_output=True, text=True)
+                process = subprocess.run(command, capture_output=True, text=True, shell=True)
                 if process.returncode == 0:
                     logging.info(f"Successfully connected to epic at {destination_ip} using {dns_ip})")
                     successful_resolutions[anti_sanction_dns["name"]] = True
@@ -264,7 +264,7 @@ class Api:
             # Kill proxy:
             logging.info("Killing Proxy...")
             try:
-                self._proxy_process.send_signal(signal.CTRL_BREAK_EVENT)
+                subprocess.call(['taskkill', '/IM', 'http_proxy.exe', '/T', '/F'], close_fds=True, creationflags=134217728, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             except Exception as e:
                 logging.info(f"Failed to kill proxy: {e}")
 
@@ -288,7 +288,7 @@ class Api:
             logging.info("Starting Proxy...")
             if not self._proxy_log_file:
                 self._proxy_log_file = open('proxy.log', 'a')
-            self._proxy_process = subprocess.Popen(f"\"{PROXY_EXEC_PATH}\" --mode reverse:http://{CACHE_DOMAIN}@{local_ip}:80 --mode reverse:tcp://{cache_ip}:443@{local_ip}:443 --set keep_host_header=true --set allow_hosts={CACHE_DOMAIN} -s \"{PROXY_ADDON_PATH}\" --set token={token} --set termlog_verbosity=warn --set flow_detail=0 --set stream_large_bodies=100k", close_fds=True, creationflags=subprocess.CREATE_NEW_PROCESS_GROUP, stdout=self._proxy_log_file, stderr=self._proxy_log_file)
+            self._proxy_process = subprocess.Popen(f"\"{PROXY_EXEC_PATH}\" --mode reverse:http://{CACHE_DOMAIN}@{local_ip}:80 --mode reverse:tcp://{cache_ip}:443@{local_ip}:443 --set keep_host_header=true --set allow_hosts={CACHE_DOMAIN} -s \"{PROXY_ADDON_PATH}\" --set token={token} --set termlog_verbosity=warn --set flow_detail=0 --set stream_large_bodies=100k", close_fds=True, creationflags=134217728, stdout=self._proxy_log_file, stderr=self._proxy_log_file)
 
             # Run DNS reverse proxy:
             logging.info("Starting DNS server...")
@@ -364,21 +364,19 @@ if __name__ == '__main__':
                 token = account_file.read().strip()
                 if token:
                     api.submit_token(token, False)
-
+        height = int(615 + (ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100) * 40)
         if api._user_data:
-            height = int(615 + (ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100) * 40)
             subprocess.call(['taskkill', '/IM', 'http_proxy.exe', '/T', '/F'], close_fds=True, creationflags=134217728, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             window = webview.create_window(WINDOW_TITLE, INDEX_PATH, width=400,height=height,js_api=api, frameless=True)
             api.set_window(window) 
         else:
-            window = webview.create_window(WINDOW_TITLE, FORM_PATH, width=400,height=620,js_api=api, frameless=True)
+            window = webview.create_window(WINDOW_TITLE, FORM_PATH, width=400,height=height,js_api=api, frameless=True)
             api.set_window(window)
 
     try:
-        webview.start(gui="edgehtml",debug=True)
+        webview.start()
     except Exception as e:
-        logging.error(f"Failed to use edgehtml: {e}, using edgechromium...")
-        webview.start(gui="edgechromium")
+        logging.error(f"Failed to start webview: {e}")
     finally:
         # Quit:
         time.sleep(0.5)

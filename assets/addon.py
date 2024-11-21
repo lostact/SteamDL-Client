@@ -24,7 +24,7 @@ class SteamDL:
             flow.request.headers["Auth-Token"] = ctx.options.token
 
     def responseheaders(self,flow):
-        if 200 <= flow.response.status_code <= 299:
+        if 200 <= flow.response.status_code <= 299 and flow.request.headers.get("User-Agent") != "GamingServices":
             self.rx_bytes += int(flow.response.headers.get("Content-Length", 0))
 
         current_time = time()
