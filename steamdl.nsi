@@ -4,7 +4,7 @@
 
 !define VERSIONMAJOR 1
 !define VERSIONMINOR 2
-!define VERSIONBUILD 5
+!define VERSIONBUILD 6
 
 !define HELPURL "https://steamdl.ir/contact-us/"
 !define UPDATEURL "https://steamdl.ir/"

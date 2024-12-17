@@ -1,4 +1,4 @@
-import sys, os, requests, json, subprocess, threading, socket, wmi, webview, logging, time
+import sys, os, requests, json, subprocess, threading, socket, wmi, webview, logging, time, winreg
 
 import ctypes
 from ctypes import wintypes
@@ -55,7 +55,7 @@ def cleanup_temp_folders():
                 except subprocess.CalledProcessError as e:
                     logging.info(f"Failed to remove webview temp files in {folder_path}: {e}")
 
-CURRENT_VERSION = "1.2.5"
+CURRENT_VERSION = "1.2.6"
 WINDOW_TITLE = f"SteamDL v{CURRENT_VERSION}"
 GITHUB_RELEASE_URL = "https://github.com/lostact/SteamDL-Client/releases/latest/download/steamdl_installer.exe"
 
@@ -134,6 +134,42 @@ class Api:
         self._proxy_log_file = None
         self._dns_thread = None
         self._dns_backup = None
+        self._auto_connect = False
+
+    def is_in_startup(self):
+        try:
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run", 0, winreg.KEY_READ)
+            value, reg_type = winreg.QueryValueEx(key, "steamdl")
+            winreg.CloseKey(key)
+            return True
+        except FileNotFoundError:
+            return False
+        except Exception as e:
+            logging.error(f"Error checking startup status: {e}")
+            return False
+
+    def add_to_startup(self):
+        try:
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run", 0, winreg.KEY_SET_VALUE)
+            winreg.SetValueEx(key, "steamdl", 0, winreg.REG_SZ, sys.executable)
+            winreg.CloseKey(key)
+            return True
+        except Exception as e:
+            logging.error(f"Error adding to startup: {e}")
+            return False
+
+    def remove_from_startup(self):
+        try:
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run", 0, winreg.KEY_SET_VALUE)
+            winreg.DeleteValue(key, "steamdl")
+            winreg.CloseKey(key)
+            return True
+        except FileNotFoundError:
+            logging.error("The application was not in the startup list.")
+            return False
+        except Exception as e:
+            logging.error(f"Error removing from startup: {e}")
+            return False
 
     def get_default_interface_ip(self):
         try:
@@ -176,13 +212,13 @@ class Api:
                     successful_resolutions[anti_sanction_dns["name"]] = True
                     self.change_anti_sanction(index)
                     self._window.evaluate_js(f"document.getElementById('dns_select').value={index + 1};")
+                    self._window.evaluate_js("adjustWidth(document.getElementById('dns_select'));")
                     return
             except Exception as error:
                 logging.error(f"Failed to try dns server {anti_sanction_dns} with error: {error}")
         logging.error("None of anti sanction servers worked, falling back to first one...")
         self.change_anti_sanction(0)
         self._window.evaluate_js("document.getElementById('dns_select').value=1;")
-       
 
     def process_dns_request(self, data, client_address, dns_socket):
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as upstream_socket:
@@ -254,6 +290,9 @@ class Api:
         if change_window:
             self._window.load_url(INDEX_PATH)
 
+    def toggle_autoconnect(self):
+        self._auto_connect = not self._auto_connect
+
     def toggle_proxy(self, running=None):
         local_ip = ""
 
@@ -273,11 +312,15 @@ class Api:
 
             # Restore system DNS servers:
             logging.info("Restoring system DNS servers...")
-            for network in self._dns_backup:
-                if len(self._dns_backup[network]) > 1:
-                    configure_network_dns("change", network, self._dns_backup[network])
-                else:
-                    configure_network_dns("clear", network)
+            try:
+                for network in self._dns_backup:
+                    if len(self._dns_backup[network]) > 1:
+                        configure_network_dns("change", network, self._dns_backup[network])
+                    else:
+                        configure_network_dns("clear", network)
+            except Exception as e:
+                logging.error(f"Failed to restore system DNS servers: {e}")
+
         else:
             token = self._token
             cache_ip = self._cache_ip
@@ -300,9 +343,13 @@ class Api:
 
             # Change system DNS servers:
             logging.info("Changing system DNS servers...")
-            dns_backup = self._dns_backup = get_all_networks_and_dns_servers()
-            for network in dns_backup:
-                configure_network_dns("change", network, (local_ip, "1.1.1.1"))
+            try:
+                dns_backup = self._dns_backup = get_all_networks_and_dns_servers()
+                for network in dns_backup:
+                    configure_network_dns("change", network, (local_ip, "1.1.1.1"))
+            except Exception as e:
+                logging.error(f"Failed to change system DNS servers: {e}")
+
         return local_ip
 
 
@@ -318,6 +365,9 @@ class Api:
                 else:
                     logging.info(f"Default interface ip has changed, old ip: {old_ip} - new ip: {new_ip}. killing proxy...")
                 self.toggle_proxy(True)
+            else:
+                logging.info("Proxy server is not running.")
+
         return False
 
     def get_user_data(self):
@@ -343,6 +393,12 @@ class Api:
     def get_version(self):
         return CURRENT_VERSION
 
+def get_scaling_factor():
+    hdc = ctypes.windll.user32.GetDC(0)
+    dpi = ctypes.windll.gdi32.GetDeviceCaps(hdc, 88)  # 88 = LOGPIXELSX
+    ctypes.windll.user32.ReleaseDC(0, hdc)
+    return dpi / 96.0  # Default DPI is 96
+
 if __name__ == '__main__':
     api = Api()
 
@@ -364,17 +420,21 @@ if __name__ == '__main__':
                 token = account_file.read().strip()
                 if token:
                     api.submit_token(token, False)
-        height = int(615 + (ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100) * 40)
+        # print(ctypes.windll.shcore.GetScaleFactorForDevice(0), get_scaling_factor())
         if api._user_data:
             subprocess.call(['taskkill', '/IM', 'http_proxy.exe', '/T', '/F'], close_fds=True, creationflags=134217728, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            window = webview.create_window(WINDOW_TITLE, INDEX_PATH, width=400,height=height,js_api=api, frameless=True)
+            window = webview.create_window(WINDOW_TITLE, INDEX_PATH, width=400,height=695,js_api=api, frameless=True)
+            # 695 -> 655 100%
+            # 695 -> 806 125%
+            # 695 -> 952 150%
+            # 695 -> 1102 150%
             api.set_window(window) 
         else:
-            window = webview.create_window(WINDOW_TITLE, FORM_PATH, width=400,height=height,js_api=api, frameless=True)
+            window = webview.create_window(WINDOW_TITLE, FORM_PATH, width=400,height=675,js_api=api, frameless=True)
             api.set_window(window)
 
     try:
-        webview.start()
+        webview.start(debug=True)
     except Exception as e:
         logging.error(f"Failed to start webview: {e}")
     finally:

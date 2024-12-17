@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fa">
+<html lang="fa" class="pywebview-drag-region">
 
 <head>
   <meta charset="UTF-8">
@@ -12,6 +12,9 @@
       box-sizing: border-box;
     }
     html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td,article,aside,canvas,details,embed,figure,figcaption,footer,header,hgroup,menu,nav,output,ruby,section,summary,time,mark,audio,video{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline}article,aside,details,figcaption,figure,footer,header,hgroup,menu,nav,section{display:block}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}table{border-collapse:collapse;border-spacing:0}
+    html {
+      overflow: hidden;
+    }
     body {
       background: #fefce8;
       font-family: "Vazirmatn", sans-serif;
@@ -19,8 +22,9 @@
       display: flex;
       align-items: baseline;
       justify-content: center;
-      height: 100vh;
       direction: rtl;
+      width: fit-content;
+      margin: 0 auto;
     }
     .flex-column
     {
@@ -413,6 +417,72 @@
   option:hover {
       background-color: #e9ecef;
   }
+
+
+  .switch input {display:none;}
+
+  .switch
+  {
+    font-size: 12px;
+  }
+  .switch .slider {
+    position: relative;
+    display: inline-block;
+    width: 30px;
+    height: 17px;
+    vertical-align: middle;
+    margin-right: 5px;
+  }
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    -webkit-transition: .4s;
+    transition: .4s;
+  }
+
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 13px;
+    width: 13px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    -webkit-transition: .4s;
+    transition: .4s;
+  }
+
+  input:checked + .slider {
+    background-color: #66B032;
+  }
+
+  input:focus + .slider {
+    box-shadow: 0 0 1px #2196F3;
+  }
+
+  input:checked + .slider:before {
+    -webkit-transform: translateX(13px);
+    -ms-transform: translateX(13px);
+    transform: translateX(13px);
+  }
+
+  .slider.round {
+    border-radius: 17px;
+  }
+
+  .slider.round:before {
+    border-radius: 50%;}
+  .switch-label {
+    font-size: 12px;
+    line-height: 17px;
+    vertical-align: super;
+    margin-left: 5px;
+  }
   </style>
   <div id='version'></div>
 </head>
@@ -431,6 +501,7 @@
       <span class="row"><h2 class="profile-card__bio-title">آی پی محلی:</h2> <span id="local_ip"></span></span>
       <span class="row"><h2 class="profile-card__bio-title">سرور دانلود:</h2> <span id="download_server">استیم دی ال</span></span>
       <span class="row"><h2 class="profile-card__bio-title">ضد تحریم:</h2> <select name="dns_select" id="dns_select" class="custom-select"><option value="0">خودکار</option></select></span>
+        <span class="row" style="text-align: right;margin-top:10px;"><label class="switch">شروع خودکار<input type="checkbox" id="autostart_switch" autocomplete="false"><span class="slider round"></span></label><label class="switch" style="margin-right: 25px;">اتصال خودکار<input type="checkbox" id="autoconnect_switch" autocomplete="false"><span class="slider round"></span></label></span>
 <!--       <div class='progressBarContainer'>
         <div class='progressBar'>
           <div class='progressBarRect'>
@@ -450,6 +521,7 @@
 <button type="button" class="btn min">
   <span class="icon-line"></span>
 </button>
+
 <!-- <button type="button" class="btn exit">
   <span class="icon-exit"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="#ffffff" d="M377.9 105.9L500.7 228.7c7.2 7.2 11.3 17.1 11.3 27.3s-4.1 20.1-11.3 27.3L377.9 406.1c-6.4 6.4-15 9.9-24 9.9c-18.7 0-33.9-15.2-33.9-33.9l0-62.1-128 0c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32l128 0 0-62.1c0-18.7 15.2-33.9 33.9-33.9c9 0 17.6 3.6 24 9.9zM160 96L96 96c-17.7 0-32 14.3-32 32l0 256c0 17.7 14.3 32 32 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c-53 0-96-43-96-96L0 128C0 75 43 32 96 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32z"/></svg></span>
 </button> -->
@@ -497,6 +569,10 @@
             $('.power-button').removeClass('on');
             $("#local_ip").text("");
           }
+          if ($('#autoconnect_switch').is(':checked'))
+          {
+            $('.power-button').click();
+          }
         }
       });
     }
@@ -509,6 +585,15 @@
     }
 
     window.addEventListener('pywebviewready', function() {
+      document.querySelector("html").style.zoom = window.outerHeight / (document.querySelector("html").offsetHeight + 20);
+      autostart_switch = document.getElementById('autostart_switch');
+      pywebview.api.is_in_startup().then(function(is_in_startup) {
+        if (is_in_startup)
+        {
+          autostart_switch.checked = true
+        }
+      });
+
       dns_select = document.getElementById('dns_select');
       pywebview.api.get_anti_sanction_data().then(function(data) {
         for (var i = 0; i < data.length; i++)
@@ -573,5 +658,21 @@
       pywebview.api.change_anti_sanction(this.value);
       adjustWidth(this);
     });
+
+    $('#autostart_switch').change(function(){
+      if (this.checked)
+      {
+        pywebview.api.add_to_startup();
+      }
+      else
+      {
+        pywebview.api.remove_from_startup();
+      }
+    });
+
+    $('#autoconnect_switch').change(function(){
+        pywebview.api.toggle_autoconnect();
+    });
+
   </script>
 </html>
