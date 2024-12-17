@@ -420,21 +420,16 @@ if __name__ == '__main__':
                 token = account_file.read().strip()
                 if token:
                     api.submit_token(token, False)
-        # print(ctypes.windll.shcore.GetScaleFactorForDevice(0), get_scaling_factor())
         if api._user_data:
             subprocess.call(['taskkill', '/IM', 'http_proxy.exe', '/T', '/F'], close_fds=True, creationflags=134217728, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             window = webview.create_window(WINDOW_TITLE, INDEX_PATH, width=400,height=695,js_api=api, frameless=True)
-            # 695 -> 655 100%
-            # 695 -> 806 125%
-            # 695 -> 952 150%
-            # 695 -> 1102 150%
             api.set_window(window) 
         else:
-            window = webview.create_window(WINDOW_TITLE, FORM_PATH, width=400,height=675,js_api=api, frameless=True)
+            window = webview.create_window(WINDOW_TITLE, FORM_PATH, width=400,height=695,js_api=api, frameless=True)
             api.set_window(window)
 
     try:
-        webview.start(debug=True)
+        webview.start()
     except Exception as e:
         logging.error(f"Failed to start webview: {e}")
     finally:
