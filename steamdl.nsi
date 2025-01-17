@@ -2,9 +2,9 @@
 !define COMPANYNAME "SteamDL.ir"
 !define DESCRIPTION "SteamDL App"
 
-!define VERSIONMAJOR 1
-!define VERSIONMINOR 2
-!define VERSIONBUILD 6
+!define VERSIONMAJOR 2
+!define VERSIONMINOR 0
+!define VERSIONBUILD 0
 
 !define HELPURL "https://steamdl.ir/contact-us/"
 !define UPDATEURL "https://steamdl.ir/"
@@ -82,13 +82,10 @@ section "install"
 	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANYNAME} ${APPNAME}" "NoRepair" 1
 	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANYNAME} ${APPNAME}" "EstimatedSize" ${INSTALLSIZE}
 
-	IfSilent +18
-	ReadRegStr $0 HKLM \
-        	"SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" "pv"
+	IfSilent +15
+	ReadRegStr $0 HKLM "SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" "pv"
 
-	${If} ${Errors} 
-	${ElseIf} $0 == ""
-	${ElseIf} $0 == "0.0.0.0"
+	${If} $0 == ""
 		SetDetailsPrint both
 		DetailPrint "$0"
 		DetailPrint "Installing: WebView2 Runtime"

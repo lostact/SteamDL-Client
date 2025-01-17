@@ -2,3 +2,5 @@ pywebview
 wmi
 cx_freeze
 requests
+dnspython
+mitmproxy

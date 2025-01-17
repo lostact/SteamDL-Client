@@ -1,15 +1,17 @@
-import cx_Freeze
+from cx_Freeze import setup, Executable
 
 build_exe_options = {
     "build_exe": "dist/steamdl",
-    "include_files": "assets",
-    "excludes": ["tkinter", "PyQt5", "webview.platforms.android", "webview.platforms.cocoa"],
+    "include_files": ["assets","preferences.json"],
+    "excludes": ["tkinter", "PyQt5", "webview.platforms.android", "webview.platforms.cocoa", "mitmproxy.addons.proxyauth"],
+    "includes": ["mitmproxy_windows"],
     "replace_paths": [("*", "")]
 }
 
-cx_Freeze.setup(
+setup(
     name = "SteamDL",
-    version = "1.1.3",
+    version = "2.0.0",
     options = {"build_exe": build_exe_options},
-    executables = [cx_Freeze.Executable("main.py",target_name="SteamDL", icon="steamdl.ico",uac_admin=True, base = "gui")]
+    executables = [Executable("main.py",target_name="SteamDL", icon="steamdl.ico",uac_admin=True, base = "gui"),
+    ]
 )
