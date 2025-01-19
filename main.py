@@ -1,16 +1,5 @@
 import sys, os, requests, json, re, subprocess, threading, multiprocessing, socket, webview, logging, time, dns.resolver 
 
-# Configure logging
-log_file = 'app.log'
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s %(levelname)s %(message)s',
-    handlers=[
-        logging.FileHandler(log_file),
-        logging.StreamHandler(sys.stdout)
-    ]
-)
-
 # log uncaught exceptions
 def log_uncaught_exceptions(exctype, value, tb):
     logging.error("Uncaught exception", exc_info=(exctype, value, tb))
@@ -106,6 +95,13 @@ def cleanup_temp_folders():
 
 def start_proxy(mitm_args):
     from mitmproxy.tools.main import mitmdump
+    logging.basicConfig(
+        level=logging.WARN,
+        format='%(asctime)s %(levelname)s %(message)s',
+        handlers=[
+            logging.FileHandler('proxy.log')
+        ]
+    )
     mitmdump(args=mitm_args)
 
 CURRENT_VERSION = "2.0.0"
@@ -455,21 +451,12 @@ class Api:
                     logging.error(f"Failed to disable IPV6: {e}")
 
             # Optimize epicgames configuration:
-            engine_file_path = os.environ.get('APPDATA') + "\\Local\\EpicGamesLauncher\\Saved\\Config\\Engine.ini"
-            if os.path.isfile(engine_file_path):
+            engine_file_dir = os.environ.get('LOCALAPPDATA') + "\\EpicGamesLauncher\\Saved\\Config\\Windows"
+            if os.path.isdir(engine_file_dir):
                 logging.info("Optimizing epicgames configuration...")
-                engine_text = """
-                    [HTTP]
-                    HttpTimeout=10
-                    HttpConnectionTimeout=10
-                    HttpReceiveTimeout=10
-                    HttpSendTimeout=10
-                    [Portal.BuildPatch]
-                    ChunkDownloads=16
-                    ChunkRetries=20
-                    RetryTime=0.5
-                """
-                with open(engine_file_path, 'w'):
+                engine_text = "[HTTP]\nHttpTimeout=10\nHttpConnectionTimeout=10\nHttpReceiveTimeout=10\nHttpSendTimeout=10\n[Portal.BuildPatch]\nChunkDownloads=16\nChunkRetries=20\nRetryTime=0.5"
+                engine_file_path = engine_file_dir + "\\Engine.ini"
+                with open(engine_file_path, 'w') as file:
                     file.write(engine_text)
             else:
                 logging.info("Epicgames installation not found...")
@@ -533,6 +520,16 @@ class Api:
 
 if __name__ == '__main__':
     multiprocessing.freeze_support()
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s %(levelname)s %(message)s',
+        handlers=[
+            logging.FileHandler('app.log'),
+            logging.StreamHandler(sys.stdout)
+        ]
+    )
+
     os.chdir(os.path.dirname(os.path.abspath(sys.argv[0])))
     api = Api()
 
