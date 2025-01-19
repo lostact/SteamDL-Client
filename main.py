@@ -413,12 +413,12 @@ class Api:
 
             # Run Proxy:
             logging.info("Starting Proxy...")
-            # self._proxy_process = subprocess.Popen(f"\"{PROXY_EXEC_PATH}\" --mode reverse:http://{CACHE_DOMAIN}@{local_ip}:80 --mode reverse:tcp://{cache_ip}:443@{local_ip}:443 --set keep_host_header=true --set allow_hosts={CACHE_DOMAIN} -s \"{PROXY_ADDON_PATH}\" --set token={token} --set termlog_verbosity=warn --set flow_detail=0 --set stream_large_bodies=100k", close_fds=True, creationflags=134217728, stdout=self._proxy_log_file, stderr=self._proxy_log_file)
             self._proxy_process = multiprocessing.Process(target=start_proxy,  args=([['--mode', f"reverse:http://{CACHE_DOMAIN}@{local_ip}:80",
                                                                                        '--mode', f"reverse:tcp://{cache_ip}:443@{local_ip}:443",
                                                                                        '-s', f"\"{PROXY_ADDON_PATH}\"",
                                                                                        '--set', f"allow_hosts={CACHE_DOMAIN}",
                                                                                        '--set', f"token={token}",
+                                                                                       '--set', f"keep_host_header=true",
                                                                                        '--set', 'termlog_verbosity=warn',
                                                                                        '--set', 'flow_detail=0',
                                                                                        '--set', 'stream_large_bodies=100k']]))
