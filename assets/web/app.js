@@ -1,5 +1,5 @@
 function formatBytes(bytes,decimals) {
-   if(bytes == 0) return '0';
+   if(bytes == 0) return '0 کیلوبایت';
    var k = 1024,
        dm = decimals || 2,
        sizes = ['بایت', 'کیلوبایت', 'مگابایت', 'گیگابایت'],
@@ -16,7 +16,7 @@ function adjustWidth(element) {
     tempElement.innerText = selectedOption;
     
     document.body.appendChild(tempElement);
-    const width = tempElement.offsetWidth + 10;
+    const width = tempElement.offsetWidth + 16;
     document.body.removeChild(tempElement);
 
     element.style.width = width + 'px';
@@ -56,7 +56,8 @@ function check_traffic()
 
 window.addEventListener('pywebviewready', function() 
 {
-  document.querySelector("html").style.zoom = window.outerHeight / (document.querySelector("html").offsetHeight + 40);
+  document.querySelector("html").style.zoom = window.outerHeight / (document.querySelector("html").offsetHeight + 10);
+  $('body').css('visibility', 'visible');
 
   dns_select = document.getElementById('dns_select');
   autoconnect_switch = document.getElementById('autoconnect_switch');

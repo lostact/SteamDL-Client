@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="fa" class="pywebview-drag-region">
-
 <head>
   <meta charset="UTF-8">
   <title>Token Form</title>
@@ -12,7 +11,8 @@
       box-sizing: border-box;
     }
     body {
-      background: #fefce8;
+      background: #1c1c1c;
+      color: white;
       font-family: "Vazirmatn", sans-serif;
       line-height: normal;
       display: flex;
@@ -38,13 +38,14 @@
       border-radius: 4px;
       box-sizing: border-box;
       text-align: left;
+      direction: ltr;
     }
 
-    input[type=submit] {
+    input[type=submit], .button {
       width: 75px;
       background-color: #4CAF50;
       color: white;
-      padding: 14px 20px;
+      padding: 14px 10px;
       margin-top: 10px;
       border: none;
       border-radius: 4px;
@@ -54,9 +55,10 @@
       font-weight: 900;
     }
 
-    input[type=submit]:hover {
+    input[type=submit]:hover, .button:hover {
       background-color: #45a049;
     }
+
 
     .flex-column
     {
@@ -69,7 +71,7 @@
       margin-bottom: 2rem;
     }
     form {
-      background: #fef9c3;
+      margin-top: 20px;
       padding: 1rem;
       text-align: center;
       border-radius: 1rem;
@@ -136,7 +138,6 @@
 </head>
 
 <body>
-  <div class="flex-column">
   <form>
     <label for="token-input">توکن خود را وارد کنید:</label>
     <textarea rows="6" id="token_input" name="account_token"></textarea>
@@ -144,8 +145,6 @@
     <span id="error">خطا: توکن نا معتبر است یا اتصال اینترنت برقرار نیست.</span>
     <span id="expired">خطا: اشتراک شما به اتمام رسیده است.<br> برای تمدید آن وارد <a id="renew-link" href="#" target="_blank">این لینک</a> شوید و دکمه پرداخت را بزنید.</span>
   </form>
-  </div>
-</div>
 <button type="button" class="btn-close">
   <span class="icon-cross"></span>
 </button>
@@ -154,6 +153,13 @@
     $('#submit_button').click(function(){
       token = $('#token_input').val();
       pywebview.api.submit_token(token)
+    });
+    $('#paste_button').click(function(){
+      navigator.clipboard.readText()
+      .then(text => { $('#token_input').val(text); })
+      .catch(err => {
+          console.error('Failed to read clipboard contents: ', err);
+      });
     });
     $('.btn-close').click(function(){
       pywebview.api.close();

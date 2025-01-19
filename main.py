@@ -35,7 +35,6 @@ def find_programs_listening_on_ports():
         result = run_cmd(["powershell", "Get-Process", "-Id", f"(Get-NetTCPConnection -LocalPort {port_number}).OwningProcess"])
         if result.returncode == 0:
             results.append(result.stdout)
-    # print("result:",results)
     programs = []
     for result in results:
         lines = result.splitlines()
@@ -368,7 +367,9 @@ class Api:
             account_file.write(token)
 
         if change_window:
+            # self._window.resize(450,900, fix_point= webview.window.FixPoint.NORTH | webview.window.FixPoint.EAST)
             self._window.load_url(INDEX_PATH)
+            
 
     def toggle_autoconnect(self):
         self._preferences["auto_connect"] = not self._preferences["auto_connect"]
@@ -499,7 +500,6 @@ class Api:
                             self._window.evaluate_js(f"alert('{text}')")
                     except Exception as e:
                         self._port_in_use_warning_shown = False
-                        print(e)
         return False
 
     def get_user_data(self):
@@ -555,10 +555,10 @@ if __name__ == '__main__':
                 if token:
                     api.submit_token(token, False)
         if api._user_data:
-            window = webview.create_window(WINDOW_TITLE, INDEX_PATH, width=400,height=695,js_api=api, frameless=True, easy_drag=True)
+            window = webview.create_window(WINDOW_TITLE, INDEX_PATH, width=300,height=600,js_api=api, frameless=True, easy_drag=True)
             api.set_window(window) 
         else:
-            window = webview.create_window(WINDOW_TITLE, FORM_PATH, width=400,height=695,js_api=api, frameless=True, easy_drag=True)
+            window = webview.create_window(WINDOW_TITLE, FORM_PATH, width=300,height=600,js_api=api, frameless=True, easy_drag=False)
             api.set_window(window)
 
     try:

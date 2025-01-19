@@ -17,6 +17,8 @@
     }
     body {
       font-family: "Vazirmatn", sans-serif;
+      background: #1c1c1c;
+      color: white;
       line-height: normal;
       display: flex;
       align-items: baseline;
@@ -24,18 +26,44 @@
       direction: rtl;
       width: fit-content;
       margin: 0 auto;
-      width: 400px;
-      height: 695px;
+      width: 300px;
+      height: 600px;
+      opacity: hidden;
+    }
+    [data-title]:hover::after {
+        opacity: 1;
+        transition: all 1s ease 1s;
+        visibility: visible;
+    }
+    [data-title]::after {
+        content: attr(data-title);
+        background-color: white;
+        color: grey;
+        font-size: 10px;
+        position: absolute;
+        padding: 1px 5px 2px 5px;
+/*        bottom: -1.6em;*/
+        top:100%;
+        right: 0;
+        max-width: 300px;
+/*        white-space: nowrap;*/
+        box-shadow: 1px 1px 3px #222222;
+        opacity: 0;
+        border: 1px solid #111111;
+        z-index: 99999;
+        visibility: hidden;
+    }
+    [data-title] {
+        position: relative;
     }
     .container {
       display: flex;
       flex-direction: column;
       position: relative;
-      border: 2px solid #000;
+/*      border: 2px solid #000;*/
       border-radius: 1rem;
-      background: #fff;
-      width: 20rem;
-      margin-top: 4.5rem;
+      width: 95%;
+      margin-top: 5.5rem;
       margin-bottom: 2rem;
       padding: 2rem 1rem 1rem 1rem;
     }
@@ -71,7 +99,7 @@
     }
     .subscription-info {
       border-radius: 1rem;
-      overflow: hidden;
+      margin-bottom: 20px;
     }
     .row
     {
@@ -79,10 +107,11 @@
     }
     .row-title {
       font-size: 0.875em;
-      font-weight: 900;
+      font-weight: bold;
     }
     .row-value
     {
+      color: #d04c35;
       float: left;
     }
     .center
@@ -91,10 +120,12 @@
     }
     p
     {
+      color: #b2b0b1;
       margin: 0 0 10px 0;
     }
     h2, h3
     {
+      color:#ffda00;
       margin: 5px 0 5px 0;
     }
     a.power-button{
@@ -111,7 +142,7 @@
       -1px -1px 2px rgba(0,0,0,0.1),
       -1px 1px 2px rgba(0,0,0,0.1);
     text-align: center;
-    line-height: 200px;
+/*    line-height: 200px;*/
     left: 0;
     right: 0;
     margin: 20px auto 0 auto;
@@ -120,11 +151,13 @@
     transition-timing-function: cubic-bezier(0, 1, 0.5, 1);
     cursor: pointer;
   }
+  a.power-button::after
+  {
+    right:-50%;
+    width: 200px;
+  }
   .power-button:hover{
-    box-shadow:  0px 2px 6px rgba(0,0,0,0.4),
-      1px 1px 6px rgba(0,0,0,0.3),
-      -1px -1px 4px rgba(0,0,0,0.1),
-      -1px 1px 4px rgba(0,0,0,0.1);
+    box-shadow: rgba(255, 255, 255, 0.1) 0px 0px 10px;
   }
   .power-button.on svg{  
       filter: invert(42%) sepia(93%) saturate(1352%) hue-rotate(87deg) brightness(90%) contrast(119%);
@@ -211,6 +244,7 @@
   }
   #version
   {
+    color: #b2b0b1;
     position: absolute;
     font-size: 10px;
     left: 10px;
@@ -218,9 +252,10 @@
   }
   .custom-select {
     font-family: "Vazirmatn", sans-serif;
-    width: 125px;
+    font-size: 12px;
+    width: auto;
     margin: auto;
-    padding: 4px;
+    padding: 2px;
     border-radius: 4px;
     border: 1px solid #ccc;
     background-color: #fff;
@@ -230,10 +265,10 @@
     line-height: 1.5;
     cursor: pointer;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    margin-bottom: 10px;
+/*    margin-bottom: 10px;*/
   }
   option {
-      padding: 8px;
+      padding: 2px;
       background-color: #fff;
       color: #333;
   }
@@ -304,24 +339,25 @@
   </style>
 </head>
 <body>
+  <div id='version'>v1.0.0</div>
   <div class="container">
-    <div id='version'>v1.0.0</div>
     <a href="https://steamdl.ir/?mtm_source=steamdl_app" target="_blank"><img alt="SteamDL Logo" class="logo" src="Steamdlx180.png" /></a>
     <div class="subscription-info">
       <h2 class="center">شماره اشتراک</h2>
       <p id="subscription_id" class="center">#12345</p>
-      <h2 class="center">وضعیت:</h2>
-      <p class="center" id="subscription_status">فعال</p>
-      <div class="row" title="نصف این مقدار از بسته اینترنت شما کسر می شود"><span class="row-title">حجم دانلود شده: </span> <span class="row-value" id="used_traffic">0 کیلوبایت</span></div>
-      <div class="row"><span class="row-title">زمان باقیمانده:</span> <span class="row-value" id="remaining_days">30 روز</span></div>
-      <div class="row" title="قابل استفاده به عنوان ای پی دی ان اس روی کنسول یا دستگاه های دیگر متصل به مودم شما"><span class="row-title">آی پی محلی:</span> <span class="row-value" id="local_ip">0.0.0.0</span></div>
-      <div class="row" title="از این سرور برای دانلود محتوای بازی ها استفاده می شود"><span class="row-title">سرور دانلود:</span> <span class="row-value" id="download_server">استیم دی ال</span></div>
+      <div class="row" data-title="نصف این مقدار از بسته اینترنت شما کسر می شود"><span class="row-title">حجم دانلود شده</span> <span class="row-value" id="used_traffic">0 کیلوبایت</span></div>
+      <div class="row" data-title="زمان باقیمانده اشتراک شما"><span class="row-title">زمان باقیمانده</span> <span class="row-value" id="remaining_days">30 روز</span></div>
+      <div class="row" data-title="قابل استفاده به عنوان ای پی دی ان اس روی کنسول یا دستگاه های دیگر متصل به مودم شما"><span class="row-title">آی پی محلی</span> <span class="row-value" id="local_ip"></span></div>
+      <div class="row" data-title="از این سرور برای دانلود محتوای بازی ها استفاده می شود"><span class="row-title">سرور دانلود</span> <span class="row-value" id="download_server">استیم دی ال</span></div>
     </div>
-    <h3 class="center">ضد تحریم:</h3>
-    <select name="dns_select" id="dns_select" class="custom-select center" title=""><option value="automatic">خودکار</option></select>
-    <span class="row" title="شروع خودکار برنامه با ویندوز"><label class="switch">شروع خودکار<input type="checkbox" id="autostart_switch" autocomplete="false"><span class="slider round row-value"></span></label></span>
-    <span class="row" title="اتصال دوباره در صورت قطع شدن"><label class="switch">اتصال خودکار<input type="checkbox" id="autoconnect_switch" autocomplete="false"><span class="slider round row-value"></span></label></span>
-  <a class="power-button" title="پس از اتصال لانچر مورد استفاده را ریستارت کنید"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="width:50px;margin:auto;"><path d="M288 32c0-17.7-14.3-32-32-32s-32 14.3-32 32V256c0 17.7 14.3 32 32 32s32-14.3 32-32V32zM143.5 120.6c13.6-11.3 15.4-31.5 4.1-45.1s-31.5-15.4-45.1-4.1C49.7 115.4 16 181.8 16 256c0 132.5 107.5 240 240 240s240-107.5 240-240c0-74.2-33.8-140.6-86.6-184.6c-13.6-11.3-33.8-9.4-45.1 4.1s-9.4 33.8 4.1 45.1c38.9 32.3 63.5 81 63.5 135.4c0 97.2-78.8 176-176 176s-176-78.8-176-176c0-54.4 24.7-103.1 63.5-135.4z"/></svg></a>
+    <div class="row" data-title="فقط برای ورود به لانچر استفاده می شود و تاثیری روی دانلود ندارد">
+      <span class="row-title switch">ضد تحریم</span>
+      <select name="dns_select" id="dns_select" class="custom-select center row-value"><option value="automatic">خودکار</option></select>
+    </div>
+    <span class="row" data-title="شروع خودکار برنامه با ویندوز"><label class="switch row-title">شروع خودکار<input type="checkbox" id="autostart_switch" autocomplete="false"><span class="slider round row-value"></span></label></span>
+    <span class="row" data-title="اتصال دوباره در صورت قطع شدن"><label class="switch row-title">اتصال خودکار<input type="checkbox" id="autoconnect_switch" autocomplete="false"><span class="slider round row-value"></span></label></span>
+  <a class="power-button" data-title="پس از اتصال لانچر مورد استفاده را ریستارت کنید
+"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="width:50px;margin:auto;"><path d="M288 32c0-17.7-14.3-32-32-32s-32 14.3-32 32V256c0 17.7 14.3 32 32 32s32-14.3 32-32V32zM143.5 120.6c13.6-11.3 15.4-31.5 4.1-45.1s-31.5-15.4-45.1-4.1C49.7 115.4 16 181.8 16 256c0 132.5 107.5 240 240 240s240-107.5 240-240c0-74.2-33.8-140.6-86.6-184.6c-13.6-11.3-33.8-9.4-45.1 4.1s-9.4 33.8 4.1 45.1c38.9 32.3 63.5 81 63.5 135.4c0 97.2-78.8 176-176 176s-176-78.8-176-176c0-54.4 24.7-103.1 63.5-135.4z"/></svg></a>
 </div>
 <button type="button" id="close_button" class="button close">
   <span class="icon-cross"></span>
