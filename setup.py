@@ -10,7 +10,7 @@ build_exe_options = {
 
 setup(
     name = "SteamDL",
-    version = "2.0.0",
+    version = "2.0.1",
     options = {"build_exe": build_exe_options},
     executables = [Executable("main.py",target_name="SteamDL", icon="steamdl.ico",uac_admin=True, base = "gui"),
     ]

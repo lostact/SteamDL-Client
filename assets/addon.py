@@ -18,7 +18,7 @@ class SteamDL:
             pass
         
     def requestheaders(self, flow):
-        if flow.request.method == "GET":
+        if flow.request.method in ["GET", "HEAD"]:
             flow.request.headers["Real-Host"] = flow.request.host_header
             flow.request.headers["Host"] = self.cache_domain    
             flow.request.headers["Auth-Token"] = ctx.options.token

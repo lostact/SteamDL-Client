@@ -104,7 +104,7 @@ def start_proxy(mitm_args):
     )
     mitmdump(args=mitm_args)
 
-CURRENT_VERSION = "2.0.0"
+CURRENT_VERSION = "2.0.1"
 WINDOW_TITLE = f"SteamDL v{CURRENT_VERSION}"
 GITHUB_RELEASE_URL = "https://github.com/lostact/SteamDL-Client/releases/latest/download/steamdl_installer.exe"
 
