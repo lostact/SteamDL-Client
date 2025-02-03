@@ -13,7 +13,24 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-import subprocess
+CURRENT_VERSION = "2.0.2"
+WINDOW_TITLE = f"SteamDL v{CURRENT_VERSION}"
+GITHUB_RELEASE_URL = "https://github.com/lostact/SteamDL-Client/releases/latest/download/steamdl_installer.exe"
+
+CACHE_DOMAIN = "dl.steamdl.ir"
+API_DOMAIN = "api.steamdl.ir"
+FILES_DOMAIN = "files.steamdl.ir"
+
+PROXY_EXEC_PATH = resource_path('assets\\http_proxy.exe')
+PROXY_ADDON_PATH = resource_path('assets\\addon.py')
+INDEX_PATH = resource_path('assets\\web\\index.html')
+FORM_PATH = resource_path('assets\\web\\form.html')
+UPDATE_PATH = resource_path('assets\\web\\update.html')
+PREFERENCES_PATH = resource_path('preferences.json')
+
+SEARCH_IP_BYTES = socket.inet_aton("127.0.0.1")
+ANTI_SANCTION_TEST_DOMAIN = "www.epicgames.com"
+ANTI_SANCTION_TEST_PATH = "/id/api/authenticate"
 
 def run_cmd(command):
     return subprocess.run(command, capture_output=True, text=True, close_fds=True, creationflags=134217728)
@@ -36,19 +53,17 @@ def find_programs_listening_on_ports():
 
 def get_active_adapter():
     result = run_cmd(["netsh", "interface", "ipv4", "show", "config"])
-    
     if result.returncode != 0:
         logging.error("Failed to get network configuration.")
     
-    interface_pattern = r"Configuration for interface \"([\w\s]+)\""
-    gateway_pattern = r"Default Gateway:\s+([\d\.]+)"
-    
+    interface_pattern = r"Configuration for interface \"([^\"]+)\"\n(.*\n?)+?(\n|$)"
     interfaces = re.finditer(interface_pattern, result.stdout)
+
     active_adapter = None
-    
     for interface in interfaces:
         adapter_name = interface.group(1)
-        gateway_match = re.search(gateway_pattern, result.stdout[interface.end():])
+        gateway_pattern = r"Default Gateway:\s+([\d\.]+)"
+        gateway_match = re.search(gateway_pattern, interface.group(0))
         if gateway_match:
             gateway = gateway_match.group(1)
             if gateway and gateway != "0.0.0.0":
@@ -103,28 +118,6 @@ def start_proxy(mitm_args):
         ]
     )
     mitmdump(args=mitm_args)
-
-CURRENT_VERSION = "2.0.1"
-WINDOW_TITLE = f"SteamDL v{CURRENT_VERSION}"
-GITHUB_RELEASE_URL = "https://github.com/lostact/SteamDL-Client/releases/latest/download/steamdl_installer.exe"
-
-CACHE_DOMAIN = "dl.steamdl.ir"
-API_DOMAIN = "api.steamdl.ir"
-FILES_DOMAIN = "files.steamdl.ir"
-
-PROXY_EXEC_PATH = resource_path('assets\\http_proxy.exe')
-PROXY_ADDON_PATH = resource_path('assets\\addon.py')
-INDEX_PATH = resource_path('assets\\web\\index.html')
-FORM_PATH = resource_path('assets\\web\\form.html')
-UPDATE_PATH = resource_path('assets\\web\\update.html')
-PREFERENCES_PATH = resource_path('preferences.json')
-
-SEARCH_IP_BYTES = socket.inet_aton("127.0.0.1")
-ANTI_SANCTION_TEST_DOMAIN = "www.epicgames.com"
-ANTI_SANCTION_TEST_PATH = "/id/api/authenticate"
-
-# ANTI_SANCTION_TEST_DOMAIN = "packages.gitlab.com"
-# ANTI_SANCTION_TEST_PATH = "/gitlab/gitlab-ce/packages/el/7/gitlab-ce-16.8.0-ce.0.el7.x86_64.rpm/download.rpm"
 
 def check_for_update():
     try:
