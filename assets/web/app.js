@@ -3,7 +3,7 @@ function formatBytes(bytes,decimals) {
    var k = 1024,
        dm = decimals || 2,
        sizes = ['بایت', 'کیلوبایت', 'مگابایت', 'گیگابایت'],
-       i = Math.floor(Math.log(bytes) / Math.log(k));
+       i = Math.min(Math.floor(Math.log(bytes) / Math.log(k)), 3);
    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 

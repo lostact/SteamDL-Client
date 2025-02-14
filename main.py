@@ -13,7 +13,7 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-CURRENT_VERSION = "2.0.2"
+CURRENT_VERSION = "2.0.3"
 WINDOW_TITLE = f"SteamDL v{CURRENT_VERSION}"
 GITHUB_RELEASE_URL = "https://github.com/lostact/SteamDL-Client/releases/latest/download/steamdl_installer.exe"
 
