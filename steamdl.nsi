@@ -53,7 +53,6 @@ section "install"
 		Rename $PLUGINSDIR\rx.txt $INSTDIR\rx.txt
 	NotInstalled:
 	
-	
 	File /r "dist\steamdl\"
 	File "steamdl.ico"
 
@@ -99,7 +98,6 @@ section "install"
 	${EndIf}
 
 	setOutPath $INSTDIR
-	CopyFiles $INSTDIR\*.dll $INSTDIR\assets\_internal
 	Exec "steamdl.exe"
 sectionEnd
 
