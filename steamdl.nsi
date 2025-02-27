@@ -81,12 +81,14 @@ section "install"
 	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANYNAME} ${APPNAME}" "NoRepair" 1
 	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${COMPANYNAME} ${APPNAME}" "EstimatedSize" ${INSTALLSIZE}
 
-	IfSilent +15
-	ReadRegStr $0 HKLM "SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}" "pv"
+	IfSilent run_steamdl
 
-	${If} $0 == ""
+	; If the WebView2 folder exists, jump to run_steamdl
+	IfFileExists "$PROGRAMFILES32\Microsoft\EdgeWebView\Application" run_steamdl install_webview
+
+	; Otherwise, install WebView2 Runtime
+	install_webview:
 		SetDetailsPrint both
-		DetailPrint "$0"
 		DetailPrint "Installing: WebView2 Runtime"
 		SetDetailsPrint listonly
 		InitPluginsDir
@@ -95,10 +97,11 @@ section "install"
 		File "MicrosoftEdgeWebview2Setup.exe"
 		ExecWait '"$pluginsdir\webview2bootstrapper\MicrosoftEdgeWebview2Setup.exe"'
 		SetDetailsPrint both
-	${EndIf}
+		Goto run_steamdl
 
-	setOutPath $INSTDIR
-	Exec "steamdl.exe"
+	run_steamdl:
+		SetOutPath $INSTDIR
+		Exec "steamdl.exe"
 sectionEnd
 
 # Uninstaller
