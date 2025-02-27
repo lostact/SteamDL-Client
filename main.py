@@ -13,7 +13,7 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-CURRENT_VERSION = "2.0.3"
+CURRENT_VERSION = "2.0.4"
 WINDOW_TITLE = f"SteamDL v{CURRENT_VERSION}"
 GITHUB_RELEASE_URL = "https://github.com/lostact/SteamDL-Client/releases/latest/download/steamdl_installer.exe"
 
@@ -52,9 +52,20 @@ def find_programs_listening_on_ports():
     return programs
 
 def get_active_adapter():
+    disconnected_interfaces = []
+    result = run_cmd(["netsh", "interface", "show", "interface"])
+    if result.returncode != 0:
+        logging.error("Failed to get interface status list.")
+    else:
+        interface_pattern = r'\s*Enabled\s+Disconnected\s+\S+\s+(.+)'
+        interfaces = re.finditer(interface_pattern, result.stdout)
+        for interface in interfaces:
+            disconnected_interfaces.append(interface.group(1).strip())
+
     result = run_cmd(["netsh", "interface", "ipv4", "show", "config"])
     if result.returncode != 0:
         logging.error("Failed to get network configuration.")
+        return
     
     interface_pattern = r"Configuration for interface \"([^\"]+)\"\n(.*\n?)+?(\n|$)"
     interfaces = re.finditer(interface_pattern, result.stdout)
@@ -66,7 +77,7 @@ def get_active_adapter():
         gateway_match = re.search(gateway_pattern, interface.group(0))
         if gateway_match:
             gateway = gateway_match.group(1)
-            if gateway and gateway != "0.0.0.0":
+            if gateway and gateway != "0.0.0.0" and adapter_name not in disconnected_interfaces:
                 active_adapter = adapter_name
                 break
 
@@ -77,6 +88,8 @@ def get_active_adapter():
 
 def get_dns_settings():
     adapter_name = get_active_adapter()
+    if not adapter_name:
+        return
     result = run_cmd(["netsh", "interface", "ipv4", "show", "dnsservers", adapter_name])
     if result.returncode != 0:
         logging.error(f"Failed to get DNS settings for adapter: {adapter_name}")
@@ -534,7 +547,7 @@ if __name__ == '__main__':
         update_thread = threading.Thread(target=apply_update, args=(download_url, progress_callback))
         update_thread.start()
 
-        window = webview.create_window(WINDOW_TITLE, UPDATE_PATH, width=300,height=210,js_api=api, frameless=True)
+        window = webview.create_window(WINDOW_TITLE, UPDATE_PATH, width=300,height=230,js_api=api, frameless=True)
     else:
         if os.path.isfile("steamdl_installer.exe"):
             os.remove("steamdl_installer.exe")
