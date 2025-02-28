@@ -13,7 +13,7 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-CURRENT_VERSION = "2.0.4"
+CURRENT_VERSION = "2.0.5"
 WINDOW_TITLE = f"SteamDL v{CURRENT_VERSION}"
 GITHUB_RELEASE_URL = "https://github.com/lostact/SteamDL-Client/releases/latest/download/steamdl_installer.exe"
 
@@ -71,15 +71,19 @@ def get_active_adapter():
     interfaces = re.finditer(interface_pattern, result.stdout)
 
     active_adapter = None
+    minimum_metric = 9256
     for interface in interfaces:
         adapter_name = interface.group(1)
         gateway_pattern = r"Default Gateway:\s+([\d\.]+)"
         gateway_match = re.search(gateway_pattern, interface.group(0))
-        if gateway_match:
+        metric_pattern = r"Gateway Metric:\s+(\d+)"
+        metric_match =  re.search(metric_pattern, interface.group(0))
+        if gateway_match and metric_match:
             gateway = gateway_match.group(1)
-            if gateway and gateway != "0.0.0.0" and adapter_name not in disconnected_interfaces:
+            metric = int(metric_match.group(1))
+            if gateway and gateway != "0.0.0.0" and adapter_name not in disconnected_interfaces and metric < minimum_metric:
                 active_adapter = adapter_name
-                break
+                minimum_metric = metric
 
     if active_adapter:
         return active_adapter
@@ -188,8 +192,8 @@ class Api:
         self._dns_running = None
         # self._proxy_log_file = None
         self._dns_thread = None
-        self._dns_backup = None
-        self._preferences = None
+        self._dns_backup = []
+        self._preferences = []
         self._port_in_use_warning_shown = None
 
     def load_preferences(self):
@@ -384,6 +388,8 @@ class Api:
             running = self.check_proxy_status()
 
         if running:
+            if self._preferences["auto_connect"]:
+                return self._local_ip
             # Kill proxy:
             logging.info("Killing Proxy...")
             try:
@@ -547,7 +553,7 @@ if __name__ == '__main__':
         update_thread = threading.Thread(target=apply_update, args=(download_url, progress_callback))
         update_thread.start()
 
-        window = webview.create_window(WINDOW_TITLE, UPDATE_PATH, width=300,height=230,js_api=api, frameless=True)
+        window = webview.create_window(WINDOW_TITLE, UPDATE_PATH, width=300,height=250,js_api=api, frameless=True)
     else:
         if os.path.isfile("steamdl_installer.exe"):
             os.remove("steamdl_installer.exe")
