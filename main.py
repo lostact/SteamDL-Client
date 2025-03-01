@@ -113,6 +113,7 @@ def set_dns_settings(dns_settings):
     # Set secondary DNS if provided
     if len(dns_settings[adapter_name]) > 1:
         run_cmd(["netsh", "interface", "ipv4", "add", "dnsservers", adapter_name, dns_settings[adapter_name][1], "index=2"])
+    run_cmd(["ipconfig", "/flushdns"])
 
 def cleanup_temp_folders():
     temp_dir = os.environ.get('TEMP')
