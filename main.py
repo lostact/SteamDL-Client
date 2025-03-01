@@ -412,7 +412,7 @@ class Api:
             logging.info("Enabling IPV6...")
             try:
                 for adapter_name in self._dns_backup:
-                    run_cmd(["powershell", "-Command", "Enable-NetAdapterBinding", "-Name", adapter_name, "-ComponentID", "ms_tcpip6"])
+                    run_cmd(["powershell", "-Command", "Enable-NetAdapterBinding", "-Name", f"'{adapter_name}'", "-ComponentID", "ms_tcpip6"])
             except Exception as e:
                 logging.error(f"Failed to disable IPV6: {e}")
 
@@ -458,7 +458,7 @@ class Api:
             logging.info("Disabling IPV6...")
             for adapter_name in dns_backup: 
                 try:
-                    run_cmd(["powershell", "-Command", "Disable-NetAdapterBinding", "-Name", adapter_name, "-ComponentID", "ms_tcpip6"])
+                    run_cmd(["powershell", "-Command", "Disable-NetAdapterBinding", "-Name", f"'{adapter_name}'", "-ComponentID", "ms_tcpip6"])
                 except Exception as e:
                     logging.error(f"Failed to disable IPV6: {e}")
 
