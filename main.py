@@ -1,4 +1,5 @@
 import sys, os, requests, json, re, subprocess, threading, multiprocessing, socket, webview, logging, time, dns.resolver 
+from mitmproxy.tools.main import mitmdump
 
 # log uncaught exceptions
 def log_uncaught_exceptions(exctype, value, tb):
@@ -13,7 +14,7 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-CURRENT_VERSION = "2.0.5"
+CURRENT_VERSION = "2.1.0"
 WINDOW_TITLE = f"SteamDL v{CURRENT_VERSION}"
 GITHUB_RELEASE_URL = "https://github.com/lostact/SteamDL-Client/releases/latest/download/steamdl_installer.exe"
 
@@ -127,7 +128,6 @@ def cleanup_temp_folders():
                     logging.info(f"Failed to remove webview temp files in {folder_path}: {e}")
 
 def start_proxy(mitm_args):
-    from mitmproxy.tools.main import mitmdump
     logging.basicConfig(
         level=logging.WARN,
         format='%(asctime)s %(levelname)s %(message)s',
@@ -191,11 +191,12 @@ class Api:
 
         self._proxy_process = None
         self._dns_running = None
-        # self._proxy_log_file = None
+        self._running = None
+        self._health_check_thread = None
         self._dns_thread = None
+        self._optimized_epicgames = None
         self._dns_backup = []
         self._preferences = []
-        self._port_in_use_warning_shown = None
 
     def load_preferences(self):
         try:
@@ -248,6 +249,29 @@ class Api:
         except Exception as e:
             logging.error(f"Error removing from startup: {e}")
             return False
+
+    def show_port_in_use_warning(self):
+        try:
+            programs = find_programs_listening_on_ports()
+            if programs:
+                programs_list = "\\n".join(programs)
+                text = f":برنامه های زیر با نرم افزار استیم دی ال اختلال دارند\\n\\n{programs_list}\\n\\n.لطفا پس از بستن برنامه های فوق دوباره امتحان کنید"
+                self._window.evaluate_js(f"alert('{text}')")
+        except Exception as e:
+            pass
+
+    def optimize_epicgames(self):
+        engine_file_dir = os.environ.get('LOCALAPPDATA') + "\\EpicGamesLauncher\\Saved\\Config\\Windows"
+        if os.path.isdir(engine_file_dir):
+            engine_text = "[HTTP]\nHttpTimeout=10\nHttpConnectionTimeout=10\nHttpReceiveTimeout=10\nHttpSendTimeout=10\n[Portal.BuildPatch]\nChunkDownloads=16\nChunkRetries=20\nRetryTime=0.5"
+            engine_file_path = engine_file_dir + "\\Engine.ini"
+            with open(engine_file_path, 'w') as file:
+                file.write(engine_text)
+            self._optimized_epicgames = True
+        else:
+            logging.info("Epicgames installation not found...")
+
+
 
     def get_default_interface_ip(self):
         try:
@@ -382,22 +406,15 @@ class Api:
         self._preferences["auto_connect"] = not self._preferences["auto_connect"]
         self.save_preferences()
 
-    def toggle_proxy(self, running=None):
-        local_ip = ""
-
-        if running == None:
-            running = self.check_proxy_status()
-
-        if running:
-            if self._preferences["auto_connect"]:
-                return self._local_ip
+    def toggle_proxy(self):
+        if self._running:
+            self._running = False
             # Kill proxy:
-            logging.info("Killing Proxy...")
+            logging.info("Stopping Proxy...")
             try:
-                # subprocess.call(['taskkill', '/IM', 'http_proxy.exe', '/T', '/F'], close_fds=True, creationflags=134217728, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
                 self._proxy_process.terminate()
             except Exception as e:
-                logging.error(f"Failed to kill proxy: {e}")
+                logging.error(f"Failed to stop proxy: {e}")
 
             # Kill DNS:
             self._dns_running = False
@@ -416,91 +433,118 @@ class Api:
                     run_cmd(["powershell", "-Command", "Enable-NetAdapterBinding", "-Name", f"'{adapter_name}'", "-ComponentID", "ms_tcpip6"])
             except Exception as e:
                 logging.error(f"Failed to disable IPV6: {e}")
-
+            logging.info("Service stopped successfully.")
         else:
-            self._port_in_use_warning_shown = False
-            token = self._token
-            cache_ip = self._cache_ip
-            local_ip = self._local_ip = self.get_default_interface_ip()
-            local_ip_bytes = self._local_ip_bytes = socket.inet_aton(local_ip)
-
             # Run Proxy:
             logging.info("Starting Proxy...")
-            self._proxy_process = multiprocessing.Process(target=start_proxy,  args=([['--mode', f"reverse:http://{CACHE_DOMAIN}@{local_ip}:80",
-                                                                                       '--mode', f"reverse:tcp://{cache_ip}:443@{local_ip}:443",
-                                                                                       '-s', f"\"{PROXY_ADDON_PATH}\"",
-                                                                                       '--set', f"allow_hosts={CACHE_DOMAIN}",
-                                                                                       '--set', f"token={token}",
-                                                                                       '--set', f"keep_host_header=true",
-                                                                                       '--set', 'termlog_verbosity=warn',
-                                                                                       '--set', 'flow_detail=0',
-                                                                                       '--set', 'stream_large_bodies=100k']]))
-            self._proxy_process.daemon = True
-            self._proxy_process.start()
+            try:
+                token = self._token
+                cache_ip = self._cache_ip
+                local_ip = self._local_ip = self.get_default_interface_ip()
+                local_ip_bytes = self._local_ip_bytes = socket.inet_aton(local_ip)
+
+                self._proxy_process = multiprocessing.Process(target=start_proxy,  args=([['--mode', f"reverse:http://{CACHE_DOMAIN}@{local_ip}:80",
+                                                                                           '--mode', f"reverse:tcp://{cache_ip}:443@{local_ip}:443",
+                                                                                           '-s', f"\"{PROXY_ADDON_PATH}\"",
+                                                                                           '--set', f"allow_hosts={CACHE_DOMAIN}",
+                                                                                           '--set', f"token={token}",
+                                                                                           '--set', f"keep_host_header=true",
+                                                                                           '--set', 'termlog_verbosity=warn',
+                                                                                           '--set', 'flow_detail=0',
+                                                                                           '--set', 'stream_large_bodies=100k']]))
+                self._proxy_process.daemon = True
+                self._proxy_process.start()
+            except Exception as e:
+                logging.error(f"Failed to start Proxy: {e}")
+                return
 
             # Run DNS reverse proxy:
             logging.info("Starting DNS server...")
-            if not self._dns_running:
-                dns_thread = self._dns_thread = threading.Thread(target=self.start_dns, daemon=True)
-                dns_thread.start()
+            try:
+                if not self._dns_running:
+                    dns_thread = self._dns_thread = threading.Thread(target=self.start_dns, daemon=True)
+                    dns_thread.start()
+            except Exception as e:
+                logging.error(f"Failed to start DNS server: {e}")
+                self._proxy_process.terminate()
+                return
 
             # Change system DNS servers:
             logging.info("Changing system DNS servers...")
             try:
-                dns_backup = self._dns_backup = get_dns_settings()
+                if not self._dns_backup:
+                    self._dns_backup = get_dns_settings()
                 new_dns_settings = {}
-                for adapter_name in dns_backup:
+                for adapter_name in self._dns_backup:
                     new_dns_settings[adapter_name] = [local_ip, "1.1.1.1"]
                 set_dns_settings(new_dns_settings)
             except Exception as e:
                 logging.error(f"Failed to change system DNS servers: {e}")
+                self._proxy_process.terminate()
+                self._dns_running = False
+                return
 
-            # Disable IPV6:
+            # Disable IPV6 (optional):
             logging.info("Disabling IPV6...")
-            for adapter_name in dns_backup: 
-                try:
-                    run_cmd(["powershell", "-Command", "Disable-NetAdapterBinding", "-Name", f"'{adapter_name}'", "-ComponentID", "ms_tcpip6"])
-                except Exception as e:
-                    logging.error(f"Failed to disable IPV6: {e}")
-
-            # Optimize epicgames configuration:
-            engine_file_dir = os.environ.get('LOCALAPPDATA') + "\\EpicGamesLauncher\\Saved\\Config\\Windows"
-            if os.path.isdir(engine_file_dir):
-                logging.info("Optimizing epicgames configuration...")
-                engine_text = "[HTTP]\nHttpTimeout=10\nHttpConnectionTimeout=10\nHttpReceiveTimeout=10\nHttpSendTimeout=10\n[Portal.BuildPatch]\nChunkDownloads=16\nChunkRetries=20\nRetryTime=0.5"
-                engine_file_path = engine_file_dir + "\\Engine.ini"
-                with open(engine_file_path, 'w') as file:
-                    file.write(engine_text)
-            else:
-                logging.info("Epicgames installation not found...")
-        return local_ip
-
-
-    def check_proxy_status(self):
-        if self._proxy_process:
-            old_ip = self._local_ip
-            new_ip = self.get_default_interface_ip()
-            if self._proxy_process.is_alive() and old_ip == new_ip and self._dns_running:
-                return True
-            elif self._proxy_process.is_alive():
-                if not self._dns_running:
-                    logging.info("DNS server is not running, killing proxy...")
-                else:
-                    logging.info(f"Default interface ip has changed, old ip: {old_ip} - new ip: {new_ip}. killing proxy...")
-                self.toggle_proxy(True)
-            else:
-                # logging.info("Proxy server is not running.")
-                if not self._port_in_use_warning_shown:
-                    self._port_in_use_warning_shown = True
+            try:
+                for adapter_name in self._dns_backup: 
                     try:
-                        programs = find_programs_listening_on_ports()
-                        if programs:
-                            programs_list = "\\n".join(programs)
-                            text = f":برنامه های زیر با نرم افزار استیم دی ال اختلال دارند\\n\\n{programs_list}\\n\\n.لطفا پس از بستن برنامه های فوق دوباره امتحان کنید"
-                            self._window.evaluate_js(f"alert('{text}')")
+                        run_cmd(["powershell", "-Command", "Disable-NetAdapterBinding", "-Name", f"'{adapter_name}'", "-ComponentID", "ms_tcpip6"])
                     except Exception as e:
-                        self._port_in_use_warning_shown = False
-        return False
+                        logging.error(f"Failed to disable IPV6: {e}")
+            except Exception as e:
+                logging.error(f"Failed to disable IPV6: {e}")
+
+            # Optimize epicgames (optional):
+            if self._optimized_epicgames == None:
+                logging.info("Optimizing epicgames configuration...")
+                self._optimized_epicgames = False
+                try:
+                    self.optimize_epicgames()
+                except Exception as e:
+                    logging.error(f"Failed to optimize epicgames configuration: {e}")
+
+            self._running = True
+
+            health_check_running = False
+            if self._health_check_thread:
+                if self._health_check_thread.is_alive():
+                    health_check_running = True
+            if not health_check_running:
+                self._health_check_thread = threading.Thread(target=self.health_check, daemon=True)
+                self._health_check_thread.start()
+
+            logging.info("Service started successfully.")
+            return local_ip
+
+    def health_check(self):
+        while self._running:
+            running = True
+            if not self._proxy_process.is_alive():
+                logging.info("Proxy process is not running, switching off...")
+                self.show_port_in_use_warning()
+                running = False
+            elif not self._dns_running:
+                logging.info("DNS server is not running, switching off...")
+                running = False
+            else:
+                old_ip = self._local_ip
+                new_ip = self.get_default_interface_ip()
+                if old_ip != new_ip:
+                    logging.info(f"Default interface ip has changed, old ip: {old_ip} - new ip: {new_ip}. switching off...")
+                    running = False
+            if not running:
+                self._window.evaluate_js("$('#power_button').addClass('disabled')")
+                self.toggle_proxy()
+                self._window.evaluate_js("$('#power_button').removeClass('on')")
+                if self._preferences["auto_connect"]:
+                    success = self.toggle_proxy()
+                    if success:
+                        self._window.evaluate_js("$('#power_button').addClass('on')")
+                self._window.evaluate_js("$('#power_button').removeClass('disabled')")
+                break
+            time.sleep(5)
+
 
     def get_user_data(self):
         logging.info("User Data: " + str(self._user_data))
@@ -524,12 +568,6 @@ class Api:
 
     def get_version(self):
         return CURRENT_VERSION
-
-# def get_scaling_factor():
-#     hdc = ctypes.windll.user32.GetDC(0)
-#     dpi = ctypes.windll.gdi32.GetDeviceCaps(hdc, 88)  # 88 = LOGPIXELSX
-#     ctypes.windll.user32.ReleaseDC(0, hdc)
-#     return dpi / 96.0  # Default DPI is 96
 
 if __name__ == '__main__':
     multiprocessing.freeze_support()
@@ -579,7 +617,7 @@ if __name__ == '__main__':
         # Quit:
         time.sleep(0.5)
         # cleanup_temp_folders()
-        if api.check_proxy_status():
+        if api._running:
             api.toggle_proxy()
 
         sys.exit()

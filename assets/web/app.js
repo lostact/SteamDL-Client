@@ -22,31 +22,6 @@ function adjustWidth(element) {
     element.style.width = width + 'px';
 }
 
-function check_proxy_status()
-{
-  pywebview.api.check_proxy_status().then(function(running) {
-    if (running)
-    {
-      if (!$('.power-button').hasClass('on'))
-      {
-        $('.power-button').addClass('on');
-      }
-    }
-    else
-    {
-      if ($('.power-button').hasClass('on'))
-      {
-        $('.power-button').removeClass('on');
-        $("#local_ip").text("");
-      }
-      if ($('#autoconnect_switch').is(':checked'))
-      {
-        $('.power-button').click();
-      }
-    }
-  });
-}
-
 function check_traffic()
 {
   pywebview.api.get_rx().then(function(rx) {
@@ -145,15 +120,34 @@ window.addEventListener('pywebviewready', function()
       pywebview.api.toggle_autoconnect();
   });
 
-  check_interval = setInterval(check_proxy_status, 1001);
-  $('.power-button').click(function() {
-    pywebview.api.toggle_proxy().then(function(local_ip) {
-      $("#local_ip").text(local_ip);
-      if ($('#dns_select').val() == "automatic")
-      {
-        pywebview.api.test_anti_sanction();
-      }
-    });
+  $('#power_button').click(function() {
+    if (!$(this).hasClass("disabled"))
+    {
+      $(this).addClass("disabled");
+      pywebview.api.toggle_proxy().then(function(local_ip) {
+        if (local_ip)
+        {
+          if (!$('#power_button').hasClass('on'))
+          {
+            $('#power_button').addClass('on');
+          }
+          $("#local_ip").text(local_ip);
+          if ($('#dns_select').val() == "automatic")
+          {
+            pywebview.api.test_anti_sanction();
+          }
+        }
+        else
+        {
+          $("#local_ip").text("");
+          if ($('#power_button').hasClass('on'))
+          {
+            $('#power_button').removeClass('on');
+          }
+        }
+        $('#power_button').removeClass("disabled")
+      });
+    }
   });
 
 })
