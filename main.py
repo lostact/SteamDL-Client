@@ -1,4 +1,4 @@
-import sys, os, requests, json, re, subprocess, threading, multiprocessing, socket, webview, logging, time, dns.resolver 
+import sys, os, requests, json, re, subprocess, threading, multiprocessing, socket, webview, logging, time, dns.resolver , tempfile
 from mitmproxy.tools.main import mitmdump
 
 # log uncaught exceptions
@@ -14,9 +14,9 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-CURRENT_VERSION = "2.1.0"
+CURRENT_VERSION = "2.2.0"
 WINDOW_TITLE = f"SteamDL v{CURRENT_VERSION}"
-GITHUB_RELEASE_URL = "https://github.com/lostact/SteamDL-Client/releases/latest/download/steamdl_installer.exe"
+REPO_PATH = "lostact/SteamDL-Client"
 
 CACHE_DOMAIN = "dl.steamdl.ir"
 API_DOMAIN = "api.steamdl.ir"
@@ -137,41 +137,49 @@ def start_proxy(mitm_args):
     )
     mitmdump(args=mitm_args)
 
-def check_for_update():
+def check_for_update(beta=False):
     try:
-        response = requests.head(GITHUB_RELEASE_URL, allow_redirects=False)
-        redirect_url = response.headers["Location"]
+        url = f"https://api.github.com/repos/{REPO_PATH}/releases"
+        response = requests.get(url)
+        releases = response.json()
+        for release in releases:
+            if not release["prerelease"] or beta:
+                latest_version = release["tag_name"]
+                for asset in release["assets"]:
+                    if asset["name"].endswith(".msi"):
+                        download_url = asset["browser_download_url"]
+                        break
+                break
 
-        latest_version = redirect_url.split('/')[-2]
         current_tuple, latest_tuple = tuple(map(int, (CURRENT_VERSION.split(".")))), tuple(map(int, (latest_version.split("."))))
         logging.info("current version: " + CURRENT_VERSION + " - latest version: " + latest_version)
         if latest_tuple and latest_tuple > current_tuple:
-            return True, redirect_url
-        return False, None
+            return True, download_url
     except requests.RequestException as e:
         logging.info(f"Failed to check for update: {e}")
-        return False, None
+
+    return False, None
 
 def apply_update(download_url, progress_callback):
-    installer_path = "steamdl_installer.exe"
+    installer_name = "steamdl_installer.msi"
     try:
         response = requests.get(download_url, allow_redirects=True, stream=True)
         response.raise_for_status()
-        total_length = response.headers.get('content-length')
-        if total_length is None:  # no content length header
-            installer_path = None
-        else:
-            total_length = int(total_length)
-            dl = 0
-            with open(installer_path, "wb") as installer_file:
-                for chunk in response.iter_content(chunk_size=8192):
-                    if chunk:
-                        dl += len(chunk)
-                        installer_file.write(chunk)
-                        done = int(100 * dl / total_length)
-                        progress_callback(done)
+        total_size = response.headers.get('content-length')
+        if total_size:
+            total_size = int(total_size)
+            downloaded_size = 0
+            with tempfile.TemporaryDirectory() as temp_dir:
+                installer_path = os.path.join(temp_dir, installer_name)
+                with open(installer_path, "wb") as installer_file:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        if chunk:
+                            downloaded_size += len(chunk)
+                            installer_file.write(chunk)
+                            done_percent = int(100 * downloaded_size / total_size)
+                            progress_callback(done_percent)
             logging.info("Downloading update finished.")
-            subprocess.Popen([installer_path, "/S"], close_fds=True, creationflags=subprocess.DETACHED_PROCESS|subprocess.CREATE_NEW_PROCESS_GROUP)
+            subprocess.Popen(["msiexec", "/i", f"\"{installer_path}\"", "/q"], close_fds=True, creationflags=subprocess.DETACHED_PROCESS|subprocess.CREATE_NEW_PROCESS_GROUP)
             os._exit(0)
     except requests.RequestException as e:
         logging.error(f"Failed to apply update: {e}")
@@ -195,16 +203,21 @@ class Api:
         self._health_check_thread = None
         self._dns_thread = None
         self._optimized_epicgames = None
-        self._dns_backup = []
-        self._preferences = []
+        self._dns_backup = {}
+        self._preferences = {"auto_connect": False, "dns_server": "automatic", "update": "latest"}
+        self.load_preferences()
+
 
     def load_preferences(self):
-        try:
-            with open(PREFERENCES_PATH, 'r') as file:
-                self._preferences = json.load(file)
-                return self._preferences
-        except Exception as e:
-            logging.error(f"Error loading preferences: {e}")
+        if os.path.isfile(PREFERENCES_PATH):
+            try:
+                with open(PREFERENCES_PATH, 'r') as file:
+                    self._preferences = json.load(file)
+            except Exception as e:
+                logging.error(f"Error loading preferences: {e}")
+
+    def get_preferences(self):
+        return self._preferences
 
     def save_preferences(self):
         try:
@@ -584,16 +597,21 @@ if __name__ == '__main__':
     os.chdir(os.path.dirname(os.path.abspath(sys.argv[0])))
     api = Api()
 
-    update_available, download_url = check_for_update()
-    if update_available:
-        def progress_callback(progress):
-            window.evaluate_js(f'updateProgress({progress})')
+    updating = False
+    if api._preferences["update"] != "off":
+        beta = api._preferences["update"] == "beta"
+        update_available, download_url = check_for_update(beta)
+        if update_available:
+            updating = True
+            def progress_callback(progress):
+                window.evaluate_js(f'updateProgress({progress})')
 
-        update_thread = threading.Thread(target=apply_update, args=(download_url, progress_callback))
-        update_thread.start()
+            update_thread = threading.Thread(target=apply_update, args=(download_url, progress_callback))
+            update_thread.start()
 
-        window = webview.create_window(WINDOW_TITLE, UPDATE_PATH, width=300,height=250,js_api=api, frameless=True)
-    else:
+            window = webview.create_window(WINDOW_TITLE, UPDATE_PATH, width=300,height=250,js_api=api, frameless=True)
+
+    if not updating:
         if os.path.isfile("steamdl_installer.exe"):
             os.remove("steamdl_installer.exe")
 

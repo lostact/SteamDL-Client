@@ -31,13 +31,14 @@ function check_traffic()
 
 window.addEventListener('pywebviewready', function() 
 {
-  document.querySelector("html").style.zoom = window.outerHeight / (document.querySelector("html").offsetHeight + 10);
+  document.querySelector("html").style.zoom = window.outerHeight / (document.querySelector("html").offsetHeight + 20);
   $('body').css('visibility', 'visible');
 
   dns_select = document.getElementById('dns_select');
+  update_select = document.getElementById('update_select');
   autoconnect_switch = document.getElementById('autoconnect_switch');
 
-  pywebview.api.load_preferences().then(function(preferences) {
+  pywebview.api.get_preferences().then(function(preferences) {
     pywebview.api.get_anti_sanction_data().then(function(dns_servers) {
       for (var index in dns_servers)
       {
@@ -50,6 +51,10 @@ window.addEventListener('pywebviewready', function()
       {
         dns_select.value = preferences['dns_server']
         pywebview.api.change_anti_sanction(preferences['dns_server']);
+      }
+      if (preferences['update'])
+      {
+        update_select.value = preferences['update']
       }
       adjustWidth(dns_select);
     });

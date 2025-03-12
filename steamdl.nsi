@@ -104,17 +104,6 @@ section "install"
 		Exec "steamdl.exe"
 sectionEnd
 
-# Uninstaller
-function un.onInit
-	SetShellVarContext all
-	ExecWait "taskKill /IM steamdl.exe /F /T"
-
-	MessageBox MB_OKCANCEL "Permanantly remove ${APPNAME}?" IDOK next
-		Abort
-	next:
-		!insertmacro VerifyUserIsAdmin
-functionEnd
-
 section "uninstall"
 	delete "$SMPROGRAMS\${APPNAME}\${APPNAME}.lnk"
 	rmDir "$SMPROGRAMS\${APPNAME}"
