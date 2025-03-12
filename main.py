@@ -14,7 +14,7 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-CURRENT_VERSION = "2.2.5"
+CURRENT_VERSION = "2.2.6"
 WINDOW_TITLE = f"SteamDL v{CURRENT_VERSION}"
 REPO_PATH = "lostact/SteamDL-Client"
 
@@ -170,7 +170,9 @@ def apply_update(download_url, progress_callback):
             total_size = int(total_size)
             downloaded_size = 0
             with tempfile.TemporaryDirectory() as temp_dir:
-                installer_path = os.path.join(temp_dir, installer_name)
+                temp_dir_path = temp_dir.name
+                logging.info(f"Downloading update to {temp_dir_path}")
+                installer_path = os.path.join(temp_dir_path, installer_name)
                 with open(installer_path, "wb") as installer_file:
                     for chunk in response.iter_content(chunk_size=8192):
                         if chunk:
@@ -181,7 +183,7 @@ def apply_update(download_url, progress_callback):
             logging.info("Downloading update finished.")
             subprocess.Popen(["msiexec", "/i", f"\"{installer_path}\"", "/q"], close_fds=True, creationflags=subprocess.DETACHED_PROCESS|subprocess.CREATE_NEW_PROCESS_GROUP)
             os._exit(0)
-    except requests.RequestException as e:
+    except Exception as e:
         logging.error(f"Failed to apply update: {e}")
         return None
 
