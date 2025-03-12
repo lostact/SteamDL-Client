@@ -3,8 +3,8 @@
 !define DESCRIPTION "SteamDL App"
 
 !define VERSIONMAJOR 2
-!define VERSIONMINOR 1
-!define VERSIONBUILD 1
+!define VERSIONMINOR 2
+!define VERSIONBUILD 3
 
 !define HELPURL "https://steamdl.ir/contact-us/"
 !define UPDATEURL "https://steamdl.ir/"

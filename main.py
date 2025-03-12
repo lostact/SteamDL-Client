@@ -14,7 +14,7 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-CURRENT_VERSION = "2.2.1"
+CURRENT_VERSION = "2.2.3"
 WINDOW_TITLE = f"SteamDL v{CURRENT_VERSION}"
 REPO_PATH = "lostact/SteamDL-Client"
 
@@ -95,7 +95,7 @@ def get_dns_settings():
     adapter_name = get_active_adapter()
     if not adapter_name:
         return
-    result = run_cmd(["netsh", "interface", "ipv4", "show", "dnsservers", adapter_name])
+    result = run_cmd(["netsh", "interface", "ipv4", "show", "dnsservers", f"'{adapter_name}'"])
     if result.returncode != 0:
         logging.error(f"Failed to get DNS settings for adapter: {adapter_name}")
     
@@ -109,11 +109,11 @@ def get_dns_settings():
 
 def set_dns_settings(dns_settings):
     for adapter_name in dns_settings:
-        run_cmd(["netsh", "interface", "ipv4", "set", "dnsservers", adapter_name, "static", dns_settings[adapter_name][0]])
+        run_cmd(["netsh", "interface", "ipv4", "set", "dnsservers", f"'{adapter_name}'", "static", dns_settings[adapter_name][0]])
 
     # Set secondary DNS if provided
     if len(dns_settings[adapter_name]) > 1:
-        run_cmd(["netsh", "interface", "ipv4", "add", "dnsservers", adapter_name, dns_settings[adapter_name][1], "index=2"])
+        run_cmd(["netsh", "interface", "ipv4", "add", "dnsservers", f"'{adapter_name}'", dns_settings[adapter_name][1], "index=2"])
     run_cmd(["ipconfig", "/flushdns"])
 
 def cleanup_temp_folders():

@@ -1,6 +1,6 @@
 from cx_Freeze import setup, Executable
 
-VERSION = "2.2.1"
+VERSION = "2.2.3"
 
 build_exe_options = {
     "build_exe": "dist/steamdl",
