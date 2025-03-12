@@ -14,7 +14,7 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-CURRENT_VERSION = "2.2.7"
+CURRENT_VERSION = "2.2.8"
 WINDOW_TITLE = f"SteamDL v{CURRENT_VERSION}"
 REPO_PATH = "lostact/SteamDL-Client"
 
@@ -95,7 +95,7 @@ def get_dns_settings():
     adapter_name = get_active_adapter()
     if not adapter_name:
         return
-    result = run_cmd(["netsh", "interface", "ipv4", "show", "dnsservers", f"'{adapter_name}'"])
+    result = run_cmd(["netsh", "interface", "ipv4", "show", "dnsservers", adapter_name])
     if result.returncode != 0:
         logging.error(f"Failed to get DNS settings for adapter: {adapter_name}")
     
@@ -109,11 +109,11 @@ def get_dns_settings():
 
 def set_dns_settings(dns_settings):
     for adapter_name in dns_settings:
-        run_cmd(["netsh", "interface", "ipv4", "set", "dnsservers", f"'{adapter_name}'", "static", dns_settings[adapter_name][0]])
+        run_cmd(["netsh", "interface", "ipv4", "set", "dnsservers", adapter_name, "static", dns_settings[adapter_name][0]])
 
     # Set secondary DNS if provided
     if len(dns_settings[adapter_name]) > 1:
-        run_cmd(["netsh", "interface", "ipv4", "add", "dnsservers", f"'{adapter_name}'", dns_settings[adapter_name][1], "index=2"])
+        run_cmd(["netsh", "interface", "ipv4", "add", "dnsservers", adapter_name, dns_settings[adapter_name][1], "index=2"])
     run_cmd(["ipconfig", "/flushdns"])
 
 def cleanup_temp_folders():
@@ -169,19 +169,18 @@ def apply_update(download_url, progress_callback):
         if total_size:
             total_size = int(total_size)
             downloaded_size = 0
-            with tempfile.TemporaryDirectory() as temp_dir:
-                temp_dir_path = temp_dir.name
-                logging.info(f"Downloading update to {temp_dir_path}")
-                installer_path = os.path.join(temp_dir_path, installer_name)
-                with open(installer_path, "wb") as installer_file:
-                    for chunk in response.iter_content(chunk_size=8192):
-                        if chunk:
-                            downloaded_size += len(chunk)
-                            installer_file.write(chunk)
-                            done_percent = int(100 * downloaded_size / total_size)
-                            progress_callback(done_percent)
+            temp_path = os.environ.get('TEMP')
+            installer_path = os.path.join(temp_path, installer_name)
+            logging.info(f"Downloading update to {installer_path}")
+            with open(installer_path, "wb") as installer_file:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        downloaded_size += len(chunk)
+                        installer_file.write(chunk)
+                        done_percent = int(100 * downloaded_size / total_size)
+                        progress_callback(done_percent)
             logging.info("Downloading update finished.")
-            subprocess.Popen(["msiexec", "/i", f"\"{installer_path}\"", "/q"], close_fds=True, creationflags=subprocess.DETACHED_PROCESS|subprocess.CREATE_NEW_PROCESS_GROUP)
+            subprocess.Popen(["msiexec", "/i", installer_path, "/q"], close_fds=True, creationflags=subprocess.DETACHED_PROCESS|subprocess.CREATE_NEW_PROCESS_GROUP)
             os._exit(0)
     except Exception as e:
         logging.error(f"Failed to apply update: {e}")
