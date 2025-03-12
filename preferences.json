@@ -1,4 +1,5 @@
 {
-    "auto_connect": false,
-    "dns_server": "electro"
+    "auto_connect": true,
+    "dns_server": "automatic",
+    "update": "beta"
 }

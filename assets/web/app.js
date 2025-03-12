@@ -31,7 +31,7 @@ function check_traffic()
 
 window.addEventListener('pywebviewready', function() 
 {
-  document.querySelector("html").style.zoom = window.outerHeight / (document.querySelector("html").offsetHeight + 20);
+  document.querySelector("html").style.zoom = window.outerHeight / (document.querySelector("html").offsetHeight + 30);
   $('body').css('visibility', 'visible');
 
   dns_select = document.getElementById('dns_select');
@@ -57,6 +57,7 @@ window.addEventListener('pywebviewready', function()
         update_select.value = preferences['update']
       }
       adjustWidth(dns_select);
+      adjustWidth(update_select);
     });
     if (preferences['auto_connect']) 
     {
@@ -109,6 +110,11 @@ window.addEventListener('pywebviewready', function()
     pywebview.api.change_anti_sanction(this.value);
     adjustWidth(this);
   });
+
+  $('#update_select').change(function(){
+    pywebview.api.change_update_option(this.value);
+    adjustWidth(this);
+  })
 
   $('#autostart_switch').change(function(){
     if (this.checked)

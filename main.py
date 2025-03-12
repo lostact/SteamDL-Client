@@ -14,7 +14,7 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-CURRENT_VERSION = "2.2.0"
+CURRENT_VERSION = "2.2.1"
 WINDOW_TITLE = f"SteamDL v{CURRENT_VERSION}"
 REPO_PATH = "lostact/SteamDL-Client"
 
@@ -212,7 +212,11 @@ class Api:
         if os.path.isfile(PREFERENCES_PATH):
             try:
                 with open(PREFERENCES_PATH, 'r') as file:
-                    self._preferences = json.load(file)
+                    new_preferences = json.load(file)
+                    for key in self._preferences:
+                        if key not in new_preferences:
+                            new_preferences[key] = self._preferences[key]
+                    self._preferences = new_preferences
             except Exception as e:
                 logging.error(f"Error loading preferences: {e}")
 
@@ -314,6 +318,10 @@ class Api:
                     break
             self._preferences['dns_server'] = anti_sanction_name
             self.save_preferences()
+
+    def change_update_option(self, update_option):
+        self._preferences["update"] = update_option
+        self.save_preferences()
 
     def test_anti_sanction(self):
         custom_resolver = dns.resolver.Resolver()
