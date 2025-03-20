@@ -14,7 +14,7 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-CURRENT_VERSION = "2.2.8"
+CURRENT_VERSION = "2.2.9"
 WINDOW_TITLE = f"SteamDL v{CURRENT_VERSION}"
 REPO_PATH = "lostact/SteamDL-Client"
 
@@ -155,7 +155,7 @@ def check_for_update(beta=False):
         logging.info("current version: " + CURRENT_VERSION + " - latest version: " + latest_version)
         if latest_tuple and latest_tuple > current_tuple:
             return True, download_url
-    except requests.RequestException as e:
+    except Exception as e:
         logging.info(f"Failed to check for update: {e}")
 
     return False, None

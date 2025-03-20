@@ -1,6 +1,5 @@
 from cx_Freeze import setup, Executable
-
-VERSION = "2.2.8"
+from main import CURRENT_VERSION
 
 build_exe_options = {
     "build_exe": "dist/steamdl",
@@ -22,7 +21,7 @@ bdist_msi_options = {
 }
 setup(
     name = "SteamDL",
-    version = VERSION,
+    version = CURRENT_VERSION,
     author = "SteamDL.ir",
     url = "https://steamdl.ir",
     options = {"build_exe": build_exe_options, "bdist_msi": bdist_msi_options},
