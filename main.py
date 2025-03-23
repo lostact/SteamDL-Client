@@ -91,29 +91,33 @@ def get_active_adapter():
     else:
         logging.error("No active adapter with an internet connection found.")
 
-def get_dns_settings():
-    adapter_name = get_active_adapter()
+def get_dns_settings(adapter_name):
     if not adapter_name:
-        return
-    result = run_cmd(["netsh", "interface", "ipv4", "show", "dnsservers", adapter_name])
-    if result.returncode != 0:
+        return []
+
+    dns_servers = []
+    try:
+        result = run_cmd(["netsh", "interface", "ipv4", "show", "dnsservers", adapter_name])
+        if result.returncode != 0:
+            logging.error(f"Failed to get DNS settings for adapter: {adapter_name}")
+        
+        if "Statically Configured DNS Servers" in result.stdout:
+            dns_pattern = r"(\d+\.\d+\.\d+\.\d+)"
+            dns_servers = re.findall(dns_pattern, result.stdout, re.MULTILINE)
+    except:
         logging.error(f"Failed to get DNS settings for adapter: {adapter_name}")
-    
-    dns_pattern = r"(\d+\.\d+\.\d+\.\d+)"
-    dns_servers = re.findall(dns_pattern, result.stdout, re.MULTILINE)
-    
-    if dns_servers:
-        return {adapter_name: dns_servers}
+        
+    return dns_servers
+
+def set_dns_settings(adapter_name, dns_servers):
+    if not dns_servers
+        run_cmd(["netsh", "interface", "ipv4", "set", "dnsservers", adapter_name, "dhcp"])
     else:
-        logging.error(f"No DNS servers found for adapter: {adapter_name}")
+        run_cmd(["netsh", "interface", "ipv4", "set", "dnsservers", adapter_name, "static", dns_servers[0]])
+        # Set secondary DNS if provided
+        if len(dns_settings) > 1:
+            run_cmd(["netsh", "interface", "ipv4", "add", "dnsservers", adapter_name, dns_servers[1], "index=2"])
 
-def set_dns_settings(dns_settings):
-    for adapter_name in dns_settings:
-        run_cmd(["netsh", "interface", "ipv4", "set", "dnsservers", adapter_name, "static", dns_settings[adapter_name][0]])
-
-    # Set secondary DNS if provided
-    if len(dns_settings[adapter_name]) > 1:
-        run_cmd(["netsh", "interface", "ipv4", "add", "dnsservers", adapter_name, dns_settings[adapter_name][1], "index=2"])
     run_cmd(["ipconfig", "/flushdns"])
 
 def cleanup_temp_folders():
@@ -204,7 +208,8 @@ class Api:
         self._health_check_thread = None
         self._dns_thread = None
         self._optimized_epicgames = None
-        self._dns_backup = {}
+        self._active_adapter_name = None
+        self._dns_servers_backup = {}
         self._preferences = {"auto_connect": False, "dns_server": "automatic", "update": "latest"}
         self.load_preferences()
 
@@ -444,17 +449,16 @@ class Api:
             # Restore system DNS servers:
             logging.info("Restoring system DNS servers...")
             try:
-                set_dns_settings(self._dns_backup)
+                set_dns_settings(self._active_adapter_name, self._dns_backup)
             except Exception as e:
                 logging.error(f"Failed to restore system DNS servers: {e}")
 
             # Enable ipv6:
             logging.info("Enabling IPV6...")
             try:
-                for adapter_name in self._dns_backup:
-                    run_cmd(["powershell", "-Command", "Enable-NetAdapterBinding", "-Name", f"'{adapter_name}'", "-ComponentID", "ms_tcpip6"])
+                run_cmd(["powershell", "-Command", "Enable-NetAdapterBinding", "-Name", f"'{self._active_adapter_name}'", "-ComponentID", "ms_tcpip6"])
             except Exception as e:
-                logging.error(f"Failed to disable IPV6: {e}")
+                logging.error(f"Failed to enable IPV6: {e}")
             logging.info("Service stopped successfully.")
         else:
             # Run Proxy:
@@ -495,11 +499,9 @@ class Api:
             logging.info("Changing system DNS servers...")
             try:
                 if not self._dns_backup:
-                    self._dns_backup = get_dns_settings()
-                new_dns_settings = {}
-                for adapter_name in self._dns_backup:
-                    new_dns_settings[adapter_name] = [local_ip, "1.1.1.1"]
-                set_dns_settings(new_dns_settings)
+                    self._active_adapter_name = get_active_adapter()
+                    self._dns_backup = get_dns_settings(self._active_adapter_name)
+                set_dns_settings(self._active_adapter_name, [local_ip, "1.1.1.1"])
             except Exception as e:
                 logging.error(f"Failed to change system DNS servers: {e}")
                 self._proxy_process.terminate()
@@ -509,11 +511,7 @@ class Api:
             # Disable IPV6 (optional):
             logging.info("Disabling IPV6...")
             try:
-                for adapter_name in self._dns_backup: 
-                    try:
-                        run_cmd(["powershell", "-Command", "Disable-NetAdapterBinding", "-Name", f"'{adapter_name}'", "-ComponentID", "ms_tcpip6"])
-                    except Exception as e:
-                        logging.error(f"Failed to disable IPV6: {e}")
+                run_cmd(["powershell", "-Command", "Disable-NetAdapterBinding", "-Name", f"'{self._active_adapter_name}'", "-ComponentID", "ms_tcpip6"])
             except Exception as e:
                 logging.error(f"Failed to disable IPV6: {e}")
 
