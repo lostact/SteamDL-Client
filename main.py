@@ -14,7 +14,7 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-CURRENT_VERSION = "2.2.10"
+CURRENT_VERSION = "2.2.11"
 WINDOW_TITLE = f"SteamDL v{CURRENT_VERSION}"
 REPO_PATH = "lostact/SteamDL-Client"
 
@@ -115,7 +115,7 @@ def set_dns_settings(adapter_name, dns_servers):
     else:
         run_cmd(["netsh", "interface", "ipv4", "set", "dnsservers", adapter_name, "static", dns_servers[0]])
         # Set secondary DNS if provided
-        if len(dns_settings) > 1:
+        if len(dns_servers) > 1:
             run_cmd(["netsh", "interface", "ipv4", "add", "dnsservers", adapter_name, dns_servers[1], "index=2"])
 
     run_cmd(["ipconfig", "/flushdns"])
@@ -209,7 +209,7 @@ class Api:
         self._dns_thread = None
         self._optimized_epicgames = None
         self._active_adapter_name = None
-        self._dns_servers_backup = {}
+        self._dns_backup = []
         self._preferences = {"auto_connect": False, "dns_server": "automatic", "update": "latest"}
         self.load_preferences()
 
