@@ -6,3 +6,4 @@
 *.bat
 *.exe
 Steamdl.pfx
+/__pycache__
