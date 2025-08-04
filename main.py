@@ -14,7 +14,7 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-CURRENT_VERSION = "2.2.12"
+CURRENT_VERSION = "2.2.13"
 WINDOW_TITLE = f"SteamDL v{CURRENT_VERSION}"
 REPO_PATH = "lostact/SteamDL-Client"
 
@@ -72,7 +72,7 @@ def get_active_adapter():
     interfaces = re.finditer(interface_pattern, result.stdout)
 
     active_adapter = None
-    minimum_metric = 9256
+    minimum_metric = float('inf')
     for interface in interfaces:
         adapter_name = interface.group(1)
         gateway_pattern = r"Default Gateway:\s+([\d\.]+)"
