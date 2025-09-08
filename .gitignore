@@ -7,3 +7,7 @@
 *.exe
 Steamdl.pfx
 /__pycache__
+account.txt
+/assets/__pycache__
+*.log
+rx.txt

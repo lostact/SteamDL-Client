@@ -14,7 +14,7 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-CURRENT_VERSION = "2.2.13"
+CURRENT_VERSION = "2.2.14"
 WINDOW_TITLE = f"SteamDL v{CURRENT_VERSION}"
 REPO_PATH = "lostact/SteamDL-Client"
 
@@ -366,8 +366,12 @@ class Api:
                     response_data_bytes = bytes(response_data)
                 elif self._anti_sanction_ip != self._cache_ip:
                     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as upstream_socket_second:
+                        upstream_socket_second.settimeout(0.2)
                         upstream_socket_second.sendto(data, (self._anti_sanction_ip, 53))
-                        response_data_bytes, _ = upstream_socket_second.recvfrom(512)
+                        try:
+                            response_data_bytes, _ = upstream_socket_second.recvfrom(512)
+                        except socket.timeout:
+                            pass
                 dns_socket.sendto(response_data_bytes, client_address)
         except Exception as e:
             logging.error(f"Error processing DNS request: {e}")
