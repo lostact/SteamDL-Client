@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fa" class="pywebview-drag-region">
+<html lang="fa">
 <head>
   <meta charset="UTF-8">
   <title>Token Form</title>
@@ -23,6 +23,20 @@
       font-size: 1.25em;
       font-weight: 900;
       margin-bottom: 0.8rem;
+    }
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 30px;
+      background: linear-gradient(180deg, #282828 0%, #1c1c1c 100%);
+      border-bottom: 1px solid #333;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: move;
     }
     .flex-column
     {
@@ -67,7 +81,7 @@
       border-radius: 1rem;
       background: #fff;
       width: 20rem;
-      margin-top: 4.5rem;
+      margin-top: 5.2rem;
       margin-bottom: 2rem;
     }
     form {
@@ -77,56 +91,46 @@
       border-radius: 1rem;
       overflow: hidden;
     }
-  .btn-close {
-    margin: 0;
-    border: 0;
-    padding: 0;
-    background: red;
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    flex-flow: column nowrap;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    transition: all 150ms;
-    position: absolute;
-    top: 10px;
-    right:10px;
-  }
-  .btn-close .icon-cross {
-    margin: 0;
-    padding: 0;
-    border: 0;
-    background: none;
-    position: relative;
-    width: 17px;
-    height: 30px;
-  }
-  .btn-close .icon-cross:before, .btn-close .icon-cross:after {
-    content: "";
-    position: absolute;
-    top: 13px;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: #fff;
-    border-radius: 4px;
-  }
-  .btn-close .icon-cross:before {
-    transform: rotate(45deg);
-  }
-  .btn-close .icon-cross:after {
-    transform: rotate(-45deg);
-  }
-  .btn-close .icon-cross span {
-    display: block;
-  }
-  .btn-close:hover, .btn-close:focus {
-    /*transform: rotateZ(90deg);*/
-    background: #0052cc;
-  }
+    .button
+    {
+      margin: 0;
+      border: 0;
+      padding: 0;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      transition: all 150ms;
+      position: fixed;
+      z-index: 1001;
+      top: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: bold;
+      color: white;
+      line-height: 1;
+    }
+    .button:hover, .button:focus {
+      opacity: 0.8;
+    }
+    .button.close {
+      background: #fe5752;
+      right:10px;
+    }
+    .button.close::before {
+      content: "×";
+    }
+    .button.minimize
+    {
+      background: #febd2f;
+      right:38px;
+    }
+    .button.minimize::before {
+      content: "−";
+      margin-top: 1px;
+    }
   #error, #expired
   {
     display: none;
@@ -138,6 +142,7 @@
 </head>
 
 <body>
+  <div class="top-bar pywebview-drag-region"></div>
   <form>
     <label for="token-input">توکن خود را وارد کنید:</label>
     <textarea rows="6" id="token_input" name="account_token"></textarea>
@@ -145,9 +150,8 @@
     <span id="error">خطا: توکن نا معتبر است یا اتصال اینترنت برقرار نیست.</span>
     <span id="expired">خطا: اشتراک شما به اتمام رسیده است.<br> برای تمدید آن وارد <a id="renew-link" href="#" target="_blank">این لینک</a> شوید و دکمه پرداخت را بزنید.</span>
   </form>
-<button type="button" class="btn-close">
-  <span class="icon-cross"></span>
-</button>
+<button type="button" id="close_button" class="button close"></button>
+<button type="button" id="minimize_button" class="button minimize"></button>
 </body>
   <script type="text/javascript">
     $('#submit_button').click(function(){
@@ -161,8 +165,11 @@
           console.error('Failed to read clipboard contents: ', err);
       });
     });
-    $('.btn-close').click(function(){
+    $('#close_button').click(function(){
       pywebview.api.close();
+    });
+    $('#minimize_button').click(function(){
+      pywebview.api.minimize();
     });
     function toggle(element)
     { 

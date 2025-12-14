@@ -14,7 +14,7 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-CURRENT_VERSION = "2.2.14"
+CURRENT_VERSION = "2.3.0"
 WINDOW_TITLE = f"SteamDL v{CURRENT_VERSION}"
 REPO_PATH = "lostact/SteamDL-Client"
 
@@ -632,7 +632,7 @@ if __name__ == '__main__':
                 if token:
                     api.submit_token(token, False)
         if api._user_data:
-            window = webview.create_window(WINDOW_TITLE, INDEX_PATH, width=300,height=600,js_api=api, frameless=True, easy_drag=True)
+            window = webview.create_window(WINDOW_TITLE, INDEX_PATH, width=300,height=600,js_api=api, frameless=True, easy_drag=False)
             api.set_window(window) 
         else:
             window = webview.create_window(WINDOW_TITLE, FORM_PATH, width=300,height=600,js_api=api, frameless=True, easy_drag=False)
