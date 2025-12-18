@@ -1,5 +1,6 @@
 {
     "auto_connect": true,
-    "dns_server": "automatic",
-    "update": "beta"
+    "dns_server": "opendns",
+    "update": "beta",
+    "custom_dns_servers": []
 }

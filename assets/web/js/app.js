@@ -342,18 +342,16 @@ window.addEventListener('pywebviewready', function()
   
   // Delete DNS
   deleteBtn.addEventListener('click', function() {
-    if (confirm('آیا مطمئن هستید که می‌خواهید این سرور DNS را حذف کنید?')) {
-      const dnsName = document.getElementById('dns_old_name').value;
-      pywebview.api.delete_custom_dns(dnsName).then(function(result) {
-        const [success, message] = result;
-        if (success) {
-          closeModal();
-          location.reload();
-        } else {
-          showMessage(message, false);
-        }
-      });
-    }
+    const dnsName = document.getElementById('dns_old_name').value;
+    pywebview.api.delete_custom_dns(dnsName).then(function(result) {
+      const [success, message] = result;
+      if (success) {
+        closeModal();
+        location.reload();
+      } else {
+        showMessage(message, false);
+      }
+    });
   });
 
 })
