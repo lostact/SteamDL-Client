@@ -1,0 +1,501 @@
+/* Main styles for index.html */
+* {
+  box-sizing: border-box;
+}
+html {
+  overflow: hidden;
+
+}
+body {
+  font-family: "Vazirmatn", sans-serif;
+  background: #1c1c1c;
+  color: white;
+  line-height: normal;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  direction: rtl;
+  width: fit-content;
+  margin: 0 auto;
+  width: 300px;
+  height: 600px;
+  opacity: hidden;
+}
+.top-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 30px;
+  background: linear-gradient(180deg, #282828 0%, #1c1c1c 100%);
+  border-bottom: 1px solid #333;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: move;
+}
+.button
+{
+  margin: 0;
+  border: 0;
+  padding: 0;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  transition: all 150ms;
+  position: fixed;
+  z-index: 1001;
+  top: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: bold;
+  color: white;
+  line-height: 1;
+}
+.button:hover, .button:focus {
+  opacity: 0.8;
+}
+.button.close {
+  background: #fe5752;
+  right: 10px;
+}
+.button.minimize {
+  background: #febd2f;
+  right: 38px;
+}
+
+[data-title]:hover::after {
+    opacity: 1;
+    transition: all 1s ease 1s;
+    visibility: visible;
+}
+[data-title]::after {
+    content: attr(data-title);
+    background-color: white;
+    color: grey;
+    font-size: 10px;
+    position: absolute;
+    padding: 1px 5px 2px 5px;
+    top:100%;
+    right: 0;
+    max-width: 300px;
+    box-shadow: 1px 1px 3px #222222;
+    opacity: 0;
+    border: 1px solid #111111;
+    z-index: 99999;
+    visibility: hidden;
+}
+[data-title] {
+    position: relative;
+}
+.container {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  border-radius: 1rem;
+  width: 95%;
+  margin-top: 6.5rem;
+  margin-bottom: 2rem;
+  padding: 2rem 1rem 1rem 1rem;
+}
+.container::before,
+.container::after {
+  content: "";
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  border: 2px solid #000;
+  border-radius: 1rem;
+  z-index: -1;
+  transition: transform 200ms ease-out;
+}
+.container:hover::before {
+  transform: rotate(-3deg) scale(1.02) translate(-1%);
+}
+.container:hover::after {
+  transform: rotate(-6deg) scale(1.02) translate(-1%);
+  z-index: -2;
+  transition-delay: 100ms;
+}
+.logo {
+  width: 80px;
+  height: 80px;
+  position: absolute;
+  object-fit: cover;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -80%);
+  border-radius: 1rem;
+  z-index: 1001;
+}
+.subscription-info {
+  border-radius: 1rem;
+  margin-bottom: 20px;
+}
+.row
+{
+  margin-bottom: 0.5rem;
+}
+.row-title {
+  font-size: 0.875em;
+  font-weight: bold;
+}
+.row-value
+{
+  color: #d04c35;
+  float: left;
+}
+.center
+{
+  text-align: center;
+}
+p
+{
+  color: #b2b0b1;
+  margin: 0 0 10px 0;
+}
+h2, h3
+{
+  color:#ffda00;
+  margin: 5px 0 5px 0;
+}
+#power_button{
+display: grid;
+align-content: center;
+width: 100px;
+height: 100px;
+font-size: 6em; 
+border: 2px solid #dedede;
+background-color: #efefef;
+box-shadow: 0px 0px 40px 1px #ddd inset,
+  0px 2px 4px rgba(0,0,0,0.4),
+  1px 1px 4px rgba(0,0,0,0.3),
+  -1px -1px 2px rgba(0,0,0,0.1),
+  -1px 1px 2px rgba(0,0,0,0.1);
+text-align: center;
+left: 0;
+right: 0;
+margin: 20px auto 0 auto;
+border-radius: 50%;
+transition: color 0.8s;
+transition-timing-function: cubic-bezier(0, 1, 0.5, 1);
+cursor: pointer;
+}
+#power_button::after
+{
+right:-50%;
+width: 200px;
+}
+#power_button:hover {
+box-shadow: rgba(255, 255, 255, 0.1) 0px 0px 10px;
+}
+#power_button.disabled
+{
+cursor: auto;
+}
+#power_button.on svg {  
+  fill: #0b9a0b;
+}
+
+#power_button.on.disabled svg {
+fill: #669966;
+}
+
+#power_button.disabled svg {
+fill: grey;
+}
+#version
+{
+color: #b2b0b1;
+position: absolute;
+font-size: 10px;
+left: 10px;
+bottom: 10px;
+}
+.custom-select {
+font-family: "Vazirmatn", sans-serif;
+font-size: 12px;
+width: auto;
+margin: 0;
+padding: 2px;
+border-radius: 4px;
+border: 1px solid #ccc;
+background-color: #fff;
+color: #333;
+outline: none;
+appearance:none;
+line-height: 1.5;
+cursor: pointer;
+box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+option {
+    padding: 2px;
+    background-color: #fff;
+    color: #333;
+}
+option:checked {
+    background-color: #007bff;
+    color: #fff;
+}
+option:hover {
+    background-color: #e9ecef;
+}
+.switch input {display:none;}
+.switch
+{
+font-size: 12px;
+}
+.switch .slider {
+position: relative;
+display: inline-block;
+width: 30px;
+height: 17px;
+vertical-align: middle;
+margin-right: 5px;
+}
+.slider {
+position: absolute;
+cursor: pointer;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background-color: #ccc;
+-webkit-transition: .4s;
+transition: .4s;
+}
+.slider:before {
+position: absolute;
+content: "";
+height: 13px;
+width: 13px;
+left: 2px;
+bottom: 2px;
+background-color: white;
+-webkit-transition: .4s;
+transition: .4s;
+}
+input:checked + .slider {
+background-color: #66B032;
+}
+input:focus + .slider {
+box-shadow: 0 0 1px #2196F3;
+}
+input:checked + .slider:before {
+-webkit-transform: translateX(13px);
+-ms-transform: translateX(13px);
+transform: translateX(13px);
+}
+.slider.round {
+border-radius: 17px;
+}
+.slider.round:before {
+border-radius: 50%;}
+.switch-label {
+font-size: 12px;
+line-height: 17px;
+vertical-align: super;
+margin-left: 5px;
+}
+
+/* DNS Action Button */
+.dns-action-btn {
+width: 20px;
+height: 20px;
+border-radius: 50%;
+background: #808080;
+color: white;
+border: none;
+font-size: 12px;
+font-weight: bold;
+line-height: 1;
+cursor: pointer;
+padding: 0;
+display: flex;
+align-items: center;
+justify-content: center;
+transition: all 0.2s;
+}
+.dns-action-btn:hover {
+background: #666666;
+transform: scale(1.1);
+}
+
+/* Modal Styles */
+.modal {
+display: none;
+position: fixed;
+z-index: 2000;
+left: 0;
+top: 0;
+width: 100%;
+height: 100%;
+background-color: rgba(0,0,0,0.7);
+animation: fadeIn 0.2s;
+}
+@keyframes fadeIn {
+from { opacity: 0; }
+to { opacity: 1; }
+}
+.modal-content {
+background-color: #2a2a2a;
+margin: 15% auto;
+padding: 0;
+border: 1px solid #444;
+border-radius: 8px;
+width: 85%;
+max-width: 280px;
+box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+animation: slideDown 0.3s;
+}
+@keyframes slideDown {
+from {
+  transform: translateY(-50px);
+  opacity: 0;
+}
+to {
+  transform: translateY(0);
+  opacity: 1;
+}
+}
+.modal-header {
+padding: 15px;
+background: linear-gradient(180deg, #333 0%, #2a2a2a 100%);
+border-bottom: 1px solid #444;
+border-radius: 8px 8px 0 0;
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+.modal-header h3 {
+margin: 0;
+font-size: 14px;
+color: #ffda00;
+}
+.modal-close {
+background: none;
+border: none;
+color: #999;
+font-size: 28px;
+font-weight: bold;
+cursor: pointer;
+line-height: 1;
+padding: 0;
+width: 25px;
+height: 25px;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+.modal-close:hover {
+color: #fff;
+}
+.modal-body {
+padding: 20px 15px;
+}
+.form-group {
+margin-bottom: 15px;
+}
+.form-group label {
+display: block;
+font-size: 11px;
+color: #b2b0b1;
+margin-bottom: 5px;
+font-weight: bold;
+}
+.form-group input[type="text"] {
+width: 100%;
+padding: 8px;
+border: 1px solid #444;
+border-radius: 4px;
+background: #1c1c1c;
+color: white;
+font-family: "Vazirmatn", sans-serif;
+font-size: 12px;
+box-sizing: border-box;
+}
+.form-group input[type="text"]:focus {
+outline: none;
+border-color: #66B032;
+box-shadow: 0 0 5px rgba(102, 176, 50, 0.3);
+}
+.form-group input::placeholder {
+color: #666;
+}
+.dns-message {
+font-size: 11px;
+padding: 8px;
+border-radius: 4px;
+margin-top: 10px;
+display: none;
+}
+.dns-message.success {
+background: rgba(102, 176, 50, 0.2);
+color: #66B032;
+border: 1px solid #66B032;
+}
+.dns-message.error {
+background: rgba(208, 76, 53, 0.2);
+color: #d04c35;
+border: 1px solid #d04c35;
+}
+.modal-footer {
+padding: 15px;
+background: #222;
+border-top: 1px solid #444;
+border-radius: 0 0 8px 8px;
+display: flex;
+gap: 8px;
+justify-content: center;
+}
+.btn {
+padding: 8px 15px;
+border: none;
+border-radius: 4px;
+font-family: "Vazirmatn", sans-serif;
+font-size: 12px;
+cursor: pointer;
+transition: all 0.2s;
+}
+.btn-primary {
+background: #66B032;
+color: white;
+}
+.btn-primary:hover {
+background: #558929;
+}
+.btn-danger {
+background: #d04c35;
+color: white;
+}
+.btn-danger:hover {
+background: #b03c2a;
+}
+.btn-secondary {
+background: #444;
+color: white;
+}
+.btn-secondary:hover {
+background: #555;
+}
+.btn:disabled {
+opacity: 0.5;
+cursor: not-allowed;
+}
+
+/* Custom DNS indicator in dropdown */
+option.custom-dns {
+font-style: italic;
+}
+
+/* Add DNS option styling */
+option.add-dns-option {
+font-weight: bold;
+color: #66B032;
+border-top: 1px solid #ccc;
+}

@@ -4,145 +4,16 @@
   <meta charset="UTF-8">
   <title>Token Form</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="vazirmtn/Vazirmatn-font-face.css" rel="stylesheet">
-  <script src="jquery.min.js"></script>
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-    body {
-      background: #1c1c1c;
-      color: white;
-      font-family: "Vazirmatn", sans-serif;
-      line-height: normal;
-      display: flex;
-      align-items: baseline;
-      justify-content: center;
-      /*min-height: 100vh;*/
-      direction: rtl;
-      font-size: 1.25em;
-      font-weight: 900;
-      margin-bottom: 0.8rem;
-    }
-    .top-bar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 30px;
-      background: linear-gradient(180deg, #282828 0%, #1c1c1c 100%);
-      border-bottom: 1px solid #333;
-      z-index: 1000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: move;
-    }
-    .flex-column
-    {
-      display: flex;
-      flex-direction: column;
-    }
-    textarea {
-      width: 100%;
-      padding: 12px 20px;
-      margin: 8px 0;
-      display: inline-block;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      box-sizing: border-box;
-      text-align: left;
-      direction: ltr;
-    }
-
-    input[type=submit], .button {
-      width: 75px;
-      background-color: #4CAF50;
-      color: white;
-      padding: 14px 10px;
-      margin-top: 10px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-family: "Vazirmatn", sans-serif;
-      font-size: 0.75em;
-      font-weight: 900;
-    }
-
-    input[type=submit]:hover, .button:hover {
-      background-color: #45a049;
-    }
-
-
-    .flex-column
-    {
-      position: relative;
-      border: 2px solid #000;
-      border-radius: 1rem;
-      background: #fff;
-      width: 20rem;
-      margin-top: 5.2rem;
-      margin-bottom: 2rem;
-    }
-    form {
-      margin-top: 20px;
-      padding: 1rem;
-      text-align: center;
-      border-radius: 1rem;
-      overflow: hidden;
-    }
-    .button
-    {
-      margin: 0;
-      border: 0;
-      padding: 0;
-      border-radius: 50%;
-      width: 20px;
-      height: 20px;
-      cursor: pointer;
-      transition: all 150ms;
-      position: fixed;
-      z-index: 1001;
-      top: 5px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      font-weight: bold;
-      color: white;
-      line-height: 1;
-    }
-    .button:hover, .button:focus {
-      opacity: 0.8;
-    }
-    .button.close {
-      background: #fe5752;
-      right:10px;
-    }
-    .button.close::before {
-      content: "×";
-    }
-    .button.minimize
-    {
-      background: #febd2f;
-      right:38px;
-    }
-    .button.minimize::before {
-      content: "−";
-      margin-top: 1px;
-    }
-  #error, #expired
-  {
-    display: none;
-    color: red;
-    font-size:12px;
-    margin-top:20px;
-  }
-  </style>
+  <link href="fonts/vazir/Vazirmatn-font-face.css" rel="stylesheet">
+  <link href="css/form.css" rel="stylesheet">
+  <script src="js/jquery.min.js"></script>
 </head>
 
 <body>
-  <div class="top-bar pywebview-drag-region"></div>
+  <div class="top-bar pywebview-drag-region">
+    <button type="button" id="close_button" class="button close">&times;</button>
+    <button type="button" id="minimize_button" class="button minimize">&minus;</button>
+  </div>
   <form>
     <label for="token-input">توکن خود را وارد کنید:</label>
     <textarea rows="6" id="token_input" name="account_token"></textarea>
@@ -150,37 +21,6 @@
     <span id="error">خطا: توکن نا معتبر است یا اتصال اینترنت برقرار نیست.</span>
     <span id="expired">خطا: اشتراک شما به اتمام رسیده است.<br> برای تمدید آن وارد <a id="renew-link" href="#" target="_blank">این لینک</a> شوید و دکمه پرداخت را بزنید.</span>
   </form>
-<button type="button" id="close_button" class="button close"></button>
-<button type="button" id="minimize_button" class="button minimize"></button>
+<script src="js/form.js"></script>
 </body>
-  <script type="text/javascript">
-    $('#submit_button').click(function(){
-      token = $('#token_input').val();
-      pywebview.api.submit_token(token)
-    });
-    $('#paste_button').click(function(){
-      navigator.clipboard.readText()
-      .then(text => { $('#token_input').val(text); })
-      .catch(err => {
-          console.error('Failed to read clipboard contents: ', err);
-      });
-    });
-    $('#close_button').click(function(){
-      pywebview.api.close();
-    });
-    $('#minimize_button').click(function(){
-      pywebview.api.minimize();
-    });
-    function toggle(element)
-    { 
-      if (element.style.display === 'none') 
-      { 
-          element.style.display = "block"; 
-      } 
-      else 
-      { 
-          element.style.display = "none" 
-      } 
-    }
-  </script>
 </html>

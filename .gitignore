@@ -1,13 +1,9 @@
 /venv
 /dist
-/assets/_internal
-/freeze
-*.spec
+__pycache__/
 *.bat
 *.exe
-Steamdl.pfx
-/__pycache__
-account.txt
-/assets/__pycache__
 *.log
-rx.txt
+*.txt
+*.json
+*.json

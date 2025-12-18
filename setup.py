@@ -1,5 +1,5 @@
 from cx_Freeze import setup, Executable
-from main import CURRENT_VERSION
+from core.config import CURRENT_VERSION
 
 build_exe_options = {
     "build_exe": "dist/steamdl",
