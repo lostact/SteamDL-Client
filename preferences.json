@@ -1,6 +1,0 @@
-{
-    "auto_connect": true,
-    "dns_server": "opendns",
-    "update": "beta",
-    "custom_dns_servers": []
-}
