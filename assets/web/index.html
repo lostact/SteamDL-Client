@@ -1,80 +1,259 @@
 <!DOCTYPE html>
-<html lang="fa">
+<html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>Subscription Info</title>
+  <title>SteamDL - ترافیک داخلی</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="fonts/vazir/Vazirmatn-font-face.css" rel="stylesheet">
   <link href="css/index.css" rel="stylesheet">
+  <script>
+    // Make dark mode the default
+    if (localStorage.getItem('darkMode') !== 'disabled') {
+      document.documentElement.classList.add('dark');
+      document.addEventListener('DOMContentLoaded', () => document.body.classList.add('dark'));
+    }
+  </script>
   <script src="js/jquery.min.js"></script>
   <script src="js/app.js"></script>
 </head>
 <body>
-  <div class="top-bar pywebview-drag-region">
-    <button type="button" id="close_button" class="button close">&times;</button>
-    <button type="button" id="minimize_button" class="button minimize">&minus;</button>
-  </div>
-  <div id='version'>v1.0.0</div>
-  <div class="container">
-    <a href="https://steamdl.ir/?mtm_source=steamdl_app" target="_blank"><img alt="SteamDL Logo" class="logo" src="images/Steamdlx180.png" /></a>
-    <div class="subscription-info">
-      <h2 class="center">شماره اشتراک</h2>
-      <p id="subscription_id" class="center">#12345</p>
-      <div class="row" data-title="نصف این مقدار از بسته اینترنت شما کسر می شود"><span class="row-title">حجم دانلود شده</span> <span class="row-value" id="used_traffic">0 کیلوبایت</span></div>
-      <div class="row" data-title="زمان باقیمانده اشتراک شما"><span class="row-title">زمان باقیمانده</span> <span class="row-value" id="remaining_days">30 روز</span></div>
-      <div class="row" data-title="قابل استفاده به عنوان ای پی دی ان اس روی کنسول یا دستگاه های دیگر متصل به مودم شما"><span class="row-title">آی پی محلی</span> <span class="row-value" id="local_ip"></span></div>
-      <div class="row" data-title="از این سرور برای دانلود محتوای بازی ها استفاده می شود"><span class="row-title">سرور دانلود</span> <span class="row-value" id="download_server">استیم دی ال</span></div>
+  <main class="phone" role="application" aria-label="ترافیک داخلی">
+    <div class="top-bar pywebview-drag-region">
+      <span class="top-ver" id="version">v1.0.0</span>
+      <button type="button" id="close_button" class="button close">&times;</button>
+      <button type="button" id="minimize_button" class="button minimize">&minus;</button>
     </div>
-    <div class="row" data-title="فقط برای ورود به لانچر استفاده می شود و تاثیری روی دانلود ندارد">
-      <span class="row-title switch">ضد تحریم</span>
-      <div class="row-value" style="display: flex; align-items: center; gap: 5px;">
-        <button id="edit_dns_button" class="dns-action-btn" style="display:none;">⚙</button>
-        <select name="dns_select" id="dns_select" class="custom-select center">
-          <option value="automatic">خودکار</option>
-          <option value="__add_new__" class="add-dns-option">افزودن</option>
-        </select>
-      </div>
-    </div>
-    <div class="row" data-title="نسخه بتا ممکن است مشکلاتی داشته باشد.">
-      <span class="row-title switch">بروزرسانی نرم افزار</span>
-      <select name="update_select" id="update_select" class="custom-select center row-value"><option value="off">غیر فعال</option><option value="latest">آخرین نسخه</option><option value="beta">نسخه بتا</option></select>
-    </div>
-    <span class="row" data-title="شروع خودکار برنامه با ویندوز"><label class="switch row-title">شروع خودکار<input type="checkbox" id="autostart_switch" autocomplete="false"><span class="slider round row-value"></span></label></span>
-    <span class="row" data-title="اتصال دوباره در صورت قطع شدن"><label class="switch row-title">اتصال خودکار<input type="checkbox" id="autoconnect_switch" autocomplete="false"><span class="slider round row-value"></span></label></span>
-  <a id="power_button" data-title="پس از اتصال لانچر مورد استفاده را ریستارت کنید
-"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="width:50px;margin:auto;"><path d="M288 32c0-17.7-14.3-32-32-32s-32 14.3-32 32V256c0 17.7 14.3 32 32 32s32-14.3 32-32V32zM143.5 120.6c13.6-11.3 15.4-31.5 4.1-45.1s-31.5-15.4-45.1-4.1C49.7 115.4 16 181.8 16 256c0 132.5 107.5 240 240 240s240-107.5 240-240c0-74.2-33.8-140.6-86.6-184.6c-13.6-11.3-33.8-9.4-45.1 4.1s-9.4 33.8 4.1 45.1c38.9 32.3 63.5 81 63.5 135.4c0 97.2-78.8 176-176 176s-176-78.8-176-176c0-54.4 24.7-103.1 63.5-135.4z"/></svg></a>
-</div>
 
-<!-- DNS Modal -->
-<div id="dns_modal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h3 id="modal_title">افزودن سرور DNS سفارشی</h3>
-      <button class="modal-close" id="modal_close">&times;</button>
+    <div class="app">
+
+      <!-- Header -->
+      <header class="header">
+        <div class="brand">
+          <img class="logo-img" src="images/Steamdlx180.png" alt="SteamDL" />
+          <div class="brand-title">
+            <div class="t">استیم دی ال</div>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button class="icon-btn" id="darkModeBtn" title="حالت شب" aria-label="حالت شب">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <button class="icon-btn" id="helpBtn" title="راهنما" aria-label="راهنما">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z" stroke="currentColor" stroke-width="2"/>
+              <path d="M9.5 9a2.7 2.7 0 0 1 5.2 1c0 2-2.7 2.1-2.7 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M12 17h.01" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Power Control -->
+      <section class="card power-control-card" aria-label="کنترل روشن/خاموش">
+        <div class="power-row">
+          <div class="status">
+            <div class="st"><span class="status-label">وضعیت:</span> <span class="status-off" id="statusText">خاموش</span></div>
+          </div>
+
+          <button class="power-btn" id="power_button" aria-label="روشن/خاموش">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M12 2v10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+              <path d="M6.2 5.6a9 9 0 1 0 11.6 0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- Subscription / Metrics -->
+      <section class="card" aria-label="اطلاعات اشتراک">
+        <div class="sub">
+          <h1>شماره اشتراک</h1>
+          <div class="id" id="subscription_id">#12345</div>
+        </div>
+
+        <div class="grid">
+          <div class="metric" data-title="نصف این مقدار از بسته اینترنت شما کسر می شود">
+            <div class="k">حجم دانلود شده</div>
+            <div class="v blue" id="used_traffic">0 کیلوبایت</div>
+          </div>
+
+          <div class="metric" data-title="زمان باقیمانده اشتراک شما">
+            <div class="k">زمان باقیمانده</div>
+            <div class="v" id="remaining_days">30 روز</div>
+          </div>
+
+          <div class="metric" data-title="قابل استفاده به عنوان ای پی دی ان اس روی کنسول یا دستگاه های دیگر متصل به مودم شما">
+            <div class="k">آی‌پی محلی</div>
+            <div class="v" id="local_ip">---</div>
+          </div>
+
+          <div class="metric" data-title="از این سرور برای دانلود محتوای بازی ها استفاده می شود">
+            <div class="k">سرور دانلود</div>
+            <div class="v green" id="download_server">استیم دی‌ال</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Toggles -->
+      <section class="card" aria-label="تنظیمات">
+        <div class="toggles">
+          <!-- ضد تحریم -->
+          <div class="toggle" data-title="فقط برای ورود به لانچر استفاده می شود و تاثیری روی دانلود ندارد">
+            <div class="left">
+              <div class="name">ضد تحریم</div>
+            </div>
+            <div class="anti-controls">
+              <select name="dns_select" id="dns_select" class="select select-compact" aria-label="انتخاب DNS ضد تحریم">
+                <option value="automatic">خودکار</option>
+                <option value="__add_new__">افزودن</option>
+              </select>
+              <button class="chip" id="edit_dns_button" type="button" aria-label="ویرایش DNS" style="display:none;">⚙</button>
+            </div>
+          </div>
+
+          <div class="toggle" data-title="نسخه بتا ممکن است مشکلاتی داشته باشد.">
+            <div class="left">
+              <div class="name">به‌روزرسانی</div>
+            </div>
+            <select name="update_select" id="update_select" class="select select-compact" style="max-width: 110px;">
+              <option value="off">غیر فعال</option>
+              <option value="latest">آخرین نسخه</option>
+              <option value="beta">نسخه بتا</option>
+            </select>
+          </div>
+
+          <div class="toggle" data-title="شروع خودکار برنامه با ویندوز">
+            <div class="left">
+              <div class="name">شروع خودکار</div>
+              <div class="desc">اجرای برنامه هنگام روشن شدن سیستم</div>
+            </div>
+            <label class="switch-container">
+              <input type="checkbox" id="autostart_switch">
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle" data-title="اتصال دوباره در صورت قطع شدن">
+            <div class="left">
+              <div class="name">اتصال خودکار</div>
+              <div class="desc">برقراری اتصال به محض اجرای برنامه</div>
+            </div>
+            <label class="switch-container">
+              <input type="checkbox" id="autoconnect_switch">
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+        </div>
+      </section>
+
     </div>
-    <div class="modal-body">
-      <input type="hidden" id="dns_edit_mode" value="add">
-      <input type="hidden" id="dns_old_name" value="">
-      
-      <div class="form-group">
-        <label for="dns_persian_name">نام سرور:</label>
-        <input type="text" id="dns_persian_name" placeholder="سرور شخصی ۱" />
+  </main>
+
+  <!-- DNS Modal -->
+  <div class="overlay" id="dns_modal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="تنظیم DNS">
+      <div class="modal-head">
+        <div class="modal-title" id="modal_title">تنظیم DNS</div>
+        <button class="icon-btn" id="modal_close" aria-label="بستن">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
       </div>
-      
-      <div class="form-group">
-        <label for="dns_primary_ip">آی پی سرور DNS:</label>
-        <input type="text" id="dns_primary_ip" placeholder="1.1.1.1" />
+
+      <div class="modal-body">
+        <input type="hidden" id="dns_edit_mode" value="add">
+        <input type="hidden" id="dns_old_name" value="">
+
+        <div class="field">
+          <label for="dns_persian_name">نام سرور</label>
+          <input type="text" id="dns_persian_name" placeholder="مثلاً سرور شخصی ۱" />
+        </div>
+
+        <div class="field">
+          <label for="dns_primary_ip">آی‌پی سرور DNS</label>
+          <input type="text" id="dns_primary_ip" inputmode="decimal" placeholder="مثلاً 1.1.1.1" />
+        </div>
+
+        <div id="dns_message" class="dns-message"></div>
+
+        <div class="modal-actions">
+          <button class="btn secondary" id="dns_save_btn" type="button">ذخیره</button>
+          <button class="btn danger" id="dns_delete_btn" type="button" style="display:none;">حذف</button>
+          <button class="btn" id="dns_cancel_btn" type="button">انصراف</button>
+        </div>
       </div>
-      
-      <div id="dns_message" class="dns-message"></div>
-    </div>
-    <div class="modal-footer">
-      <button id="dns_save_btn" class="btn btn-primary">ذخیره</button>
-      <button id="dns_delete_btn" class="btn btn-danger" style="display:none;">حذف</button>
-      <button id="dns_cancel_btn" class="btn btn-secondary">انصراف</button>
     </div>
   </div>
-</div>
+
+  <!-- Help Modal -->
+  <div class="overlay" id="helpOverlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="راهنما">
+      <div class="modal-head">
+        <div class="modal-title">راهنما</div>
+        <button class="icon-btn" id="closeHelpX" aria-label="بستن">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        
+        <div class="help-wrap">
+          <div class="help-table-wrap" aria-label="لانچرهای تحت پوشش">
+            <div class="help-table-title">لانچرهای تحت پوشش</div>
+            <table class="help-table">
+              <thead>
+                <tr>
+                  <th>لانچر</th>
+                  <th>سرعت</th>
+                  <th>نیم‌بها</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Steam</td><td>✔️</td><td>✔️</td></tr>
+                <tr><td>Epic Games</td><td>✔️</td><td>✔️</td></tr>
+                <tr><td>Ubisoft Uplay</td><td>✔️</td><td>✔️</td></tr>
+                <tr><td>Blizzard Battle.net</td><td>✔️</td><td>✔️</td></tr>
+                <tr><td>Riot Games</td><td>✔️</td><td>✔️</td></tr>
+                <tr><td>Microsoft Store</td><td>✔️</td><td>✔️</td></tr>
+                <tr><td>Playstation</td><td>✔️</td><td>✔️</td></tr>
+                <tr><td>Xbox Console</td><td>✔️</td><td>✔️</td></tr>
+                <tr><td>Xbox GamePass</td><td>✔️</td><td>✔️</td></tr>
+                <tr><td>Nintendo eShop</td><td>✔️</td><td>✔️</td></tr>
+                <tr><td>Wargaming.net</td><td>✔️</td><td>✔️</td></tr>
+                <tr><td>Warframe</td><td>✔️</td><td>✔️</td></tr>
+                <tr><td>Path of Exile</td><td>✔️</td><td>✔️</td></tr>
+                <tr><td>EA App</td><td>❌</td><td>❌</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="help-terms">
+            <div class="help-terms-title">شرایط و مقررات</div>
+            <ul class="help-terms-list">
+              <li>این سرویس دارای محدودیت تعداد کاربر هست و در صورت استفاده غیر مجاز اشتراک شما مسدود می گردد.</li>
+              <li>مبنای محاسبه مدت زمان سرویس ماه میلادی در زمان خرید اشتراک است که بین ۲۸ تا ۳۱ روز متغیر است.</li>
+              <li>استیم دی ال تعهدی برای رفع محدودیت سرعت اعمال شده توسط شرکت اینترنت شما ندارد و افزایش سرعت دانلود محدود به سرعت اینترنت شماست.</li>
+              <li>حتماً قبل از خرید سرویس از نیم بها بودن آن روی اپراتور خود اطمینان حاصل کنید. آموزش انجام این کار در <a class="help-link" href="https://steamdl.ir/policy-test/" target="_blank" rel="noopener">صفحه تست نیم بها</a> موجود است.</li>
+              <li>دامنه استیم دی ال در <a class="help-link" href="https://eservices.ito.gov.ir/page/IPListSearch" target="_blank" rel="noopener">فهرست دامنه های تعرفه نیم بها</a> ثبت و توسط سازمان فناوری اطلاعات ایران تایید شده است و در صورتی که حجم مصرفی شما با استفاده از استیم دی ال نیم بها محاسبه نمی شود مقصر شرکت سرویس دهنده اینترنت شماست که باید از طریق <a class="help-link" href="https://195.cra.ir/" target="_blank" rel="noopener">وبسایت ۱۹۵</a> شکایت خود را ثبت و پیگیری کنید. وبسایت استیم دی ال مسئولیتی در قبال عدم اعمال تعرفه نیم بها توسط اپراتور ها ندارد.</li>
+              <li>بازگشت وجه فقط در صورتی که مشکلی از سمت استیم دی ال وجود داشته باشد و ناشی از اختلالات سراسری اینترنت و یا استفاده نادرست کاربر از سرویس نباشد امکان پذیر است.</li>
+            </ul>
+          </div>
+
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn" id="closeHelpBtn" type="button">بستن</button>
+          <a class="btn support"  href="https://www.goftino.com/c/vJJUbb" target="_blank" rel="noopener">پشتیبانی</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite">پیغام</div>
 
 </body>
 </html>

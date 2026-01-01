@@ -52,12 +52,13 @@ def main():
             update_thread.start()
 
             window = webview.create_window(
-                WINDOW_TITLE, 
-                UPDATE_PATH, 
-                width=300, 
-                height=250, 
-                js_api=api, 
-                frameless=True
+                WINDOW_TITLE,
+                UPDATE_PATH,
+                width=300,
+                height=250,
+                js_api=api,
+                frameless=True,
+                background_color='#f6f7fb'
             )
 
     if not updating:
@@ -75,24 +76,26 @@ def main():
         # Create window based on authentication status
         if api._user_data:
             window = webview.create_window(
-                WINDOW_TITLE, 
-                INDEX_PATH, 
-                width=300, 
-                height=600, 
-                js_api=api, 
-                frameless=True, 
-                easy_drag=False
+                WINDOW_TITLE,
+                INDEX_PATH,
+                width=300,
+                height=650,
+                js_api=api,
+                frameless=True,
+                easy_drag=False,
+                background_color='#f6f7fb'
             )
             api.set_window(window)
         else:
             window = webview.create_window(
-                WINDOW_TITLE, 
-                FORM_PATH, 
-                width=300, 
-                height=600, 
-                js_api=api, 
-                frameless=True, 
-                easy_drag=False
+                WINDOW_TITLE,
+                FORM_PATH,
+                width=300,
+                height=650,
+                js_api=api,
+                frameless=True,
+                easy_drag=False,
+                background_color='#f6f7fb'
             )
             api.set_window(window)
 

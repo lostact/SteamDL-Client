@@ -1,26 +1,57 @@
 <!DOCTYPE html>
-<html lang="fa">
+<html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>Token Form</title>
+  <title>ورود توکن - SteamDL</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="fonts/vazir/Vazirmatn-font-face.css" rel="stylesheet">
-  <link href="css/form.css" rel="stylesheet">
+  <link href="css/index.css" rel="stylesheet">
+  <script>
+    if (localStorage.getItem('darkMode') === 'enabled') {
+      document.documentElement.classList.add('dark');
+      document.addEventListener('DOMContentLoaded', () => document.body.classList.add('dark'));
+    }
+  </script>
   <script src="js/jquery.min.js"></script>
 </head>
-
 <body>
-  <div class="top-bar pywebview-drag-region">
-    <button type="button" id="close_button" class="button close">&times;</button>
-    <button type="button" id="minimize_button" class="button minimize">&minus;</button>
-  </div>
-  <form>
-    <label for="token-input">توکن خود را وارد کنید:</label>
-    <textarea rows="6" id="token_input" name="account_token"></textarea>
-    <input type="submit" id="submit_button" value="ثبت">
-    <span id="error">خطا: توکن نا معتبر است یا اتصال اینترنت برقرار نیست.</span>
-    <span id="expired">خطا: اشتراک شما به اتمام رسیده است.<br> برای تمدید آن وارد <a id="renew-link" href="#" target="_blank">این لینک</a> شوید و دکمه پرداخت را بزنید.</span>
-  </form>
-<script src="js/form.js"></script>
+  <main class="phone" role="application" aria-label="ورود توکن">
+    <div class="top-bar pywebview-drag-region">
+      <button type="button" id="close_button" class="button close">&times;</button>
+      <button type="button" id="minimize_button" class="button minimize">&minus;</button>
+    </div>
+
+    <div class="app">
+
+      <header class="header">
+        <div class="brand">
+          <img class="logo-img" src="images/Steamdlx180.png" alt="SteamDL" />
+          <div class="brand-title">
+            <div class="t">استیم دی ال</div>
+          </div>
+        </div>
+      </header>
+
+      <section class="card">
+        <h1 class="section-title" style="font-size: 16px; margin-bottom: 12px;">توکن خود را وارد کنید:</h1>
+        <textarea id="token_input" class="select" style="width: 100%; min-height: 60px; resize: vertical; padding: 12px; font-family: inherit; direction: rtl; text-align: right;" placeholder="توکن دریافتی از پنل کاربری سایت را اینجا وارد کنید..."></textarea>
+
+        <div id="error" class="dns-message error" style="margin-top: 10px;">خطا: توکن نا معتبر است یا اتصال اینترنت برقرار نیست.</div>
+        <div id="expired" class="dns-message error" style="margin-top: 10px;">خطا: اشتراک شما به اتمام رسیده است.<br> برای تمدید آن وارد <a id="renew-link" href="#" target="_blank" class="help-link">این لینک</a> شوید و دکمه پرداخت را بزنید.</div>
+
+        <div class="modal-actions" style="margin-top: 16px;">
+          <button class="btn secondary" id="submit_button" type="button">ثبت توکن</button>
+          <button class="btn" id="paste_button" type="button">چسباندن</button>
+        </div>
+
+        <div class="hint" style="margin-top: 12px; font-size: 11px; color: var(--muted); line-height: 1.6;">
+          پس از ثبت، توکن در دستگاه ذخیره می‌شود و برنامه می‌تواند از آن استفاده کند.
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <script src="js/form.js"></script>
 </body>
 </html>
