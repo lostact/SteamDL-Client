@@ -5,7 +5,7 @@
   <title>SteamDL - ترافیک داخلی</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="fonts/vazir/Vazirmatn-font-face.css" rel="stylesheet">
-  <link href="css/index.css" rel="stylesheet">
+  <link href="css/styles.css" rel="stylesheet">
   <script>
     // Make dark mode the default
     if (localStorage.getItem('darkMode') !== 'disabled') {
@@ -51,22 +51,6 @@
         </div>
       </header>
 
-      <!-- Power Control -->
-      <section class="card power-control-card" aria-label="کنترل روشن/خاموش">
-        <div class="power-row">
-          <div class="status">
-            <div class="st"><span class="status-label">وضعیت:</span> <span class="status-off" id="statusText">خاموش</span></div>
-          </div>
-
-          <button class="power-btn" id="power_button" aria-label="روشن/خاموش">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <path d="M12 2v10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
-              <path d="M6.2 5.6a9 9 0 1 0 11.6 0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
-            </svg>
-          </button>
-        </div>
-      </section>
-
       <!-- Subscription / Metrics -->
       <section class="card" aria-label="اطلاعات اشتراک">
         <div class="sub">
@@ -98,7 +82,7 @@
       </section>
 
       <!-- Toggles -->
-      <section class="card" aria-label="تنظیمات">
+      <section class="card flex-card" aria-label="تنظیمات">
         <div class="toggles">
           <!-- ضد تحریم -->
           <div class="toggle" data-title="فقط برای ورود به لانچر استفاده می شود و تاثیری روی دانلود ندارد">
@@ -146,6 +130,22 @@
               <span class="switch-slider"></span>
             </label>
           </div>
+        </div>
+      </section>
+
+      <!-- Power Control -->
+      <section class="card power-control-card" aria-label="کنترل روشن/خاموش">
+        <div class="power-row">
+          <div class="status">
+            <div class="st"><span class="status-label">وضعیت:</span> <span class="status-off" id="statusText">خاموش</span></div>
+          </div>
+
+          <button class="power-btn" id="power_button" aria-label="روشن/خاموش">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M12 2v10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+              <path d="M6.2 5.6a9 9 0 1 0 11.6 0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+            </svg>
+          </button>
         </div>
       </section>
 
