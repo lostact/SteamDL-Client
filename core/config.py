@@ -11,7 +11,7 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 # Version information
-CURRENT_VERSION = "2.5.1"
+CURRENT_VERSION = "2.5.2"
 WINDOW_TITLE = f"SteamDL v{CURRENT_VERSION}"
 REPO_PATH = "lostact/SteamDL-Client"
 
