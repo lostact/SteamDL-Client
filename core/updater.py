@@ -9,7 +9,7 @@ def check_for_update(beta=False):
     """Check if a new version is available"""
     try:
         url = f"https://api.github.com/repos/{REPO_PATH}/releases"
-        response = requests.get(url)
+        response = requests.get(url, timeout=10)
         releases = response.json()
         for release in releases:
             if not release["prerelease"] or beta:
@@ -34,7 +34,7 @@ def apply_update(download_url, progress_callback):
     """Download and apply update"""
     installer_name = "steamdl_installer.msi"
     try:
-        response = requests.get(download_url, allow_redirects=True, stream=True)
+        response = requests.get(download_url, allow_redirects=True, stream=True, timeout=10)
         response.raise_for_status()
         total_size = response.headers.get('content-length')
         if total_size:
