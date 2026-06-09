@@ -1,6 +1,6 @@
 // JavaScript for form.html
 $('#submit_button').click(function(){
-  token = $('#token_input').val();
+  token = $('#token_input').val().trim();
   pywebview.api.submit_token(token)
 });
 
