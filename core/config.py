@@ -11,7 +11,7 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 # Version information
-CURRENT_VERSION = "2.5.3"
+CURRENT_VERSION = "2.5.5"
 WINDOW_TITLE = f"SteamDL v{CURRENT_VERSION}"
 REPO_PATH = "lostact/SteamDL-Client"
 
@@ -29,6 +29,5 @@ UPDATE_PATH = resource_path('assets\\web\\update.html')
 PREFERENCES_PATH = resource_path('preferences.json')
 
 # Network configuration
-SEARCH_IP_BYTES = b"\x7f\x00\x00\x01"  # 127.0.0.1 in bytes
 ANTI_SANCTION_TEST_DOMAIN = "www.epicgames.com"
 ANTI_SANCTION_TEST_PATH = "/id/api/authenticate"
