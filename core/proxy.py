@@ -7,13 +7,14 @@ from mitmproxy.tools.main import mitmdump
 
 def start_proxy(mitm_args):
     """Start the mitmproxy with given arguments"""
-    logging.basicConfig(
-        level=logging.WARN,
-        format='%(asctime)s %(levelname)s %(message)s',
-        handlers=[
-            logging.FileHandler('proxy.log')
-        ]
+    file_handler = logging.FileHandler('proxy.log')
+    file_handler.setLevel(logging.ERROR)
+    file_handler.setFormatter(
+        logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     )
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.ERROR)
+    root_logger.addHandler(file_handler)
     mitmdump(args=mitm_args)
 
 
