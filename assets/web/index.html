@@ -69,11 +69,6 @@
             <div class="v" id="remaining_days">30 روز</div>
           </div>
 
-          <div class="metric" data-title="قابل استفاده به عنوان ای پی دی ان اس روی کنسول یا دستگاه های دیگر متصل به مودم شما">
-            <div class="k">آی‌پی محلی</div>
-            <div class="v" id="local_ip">---</div>
-          </div>
-
           <div class="metric" data-title="از این سرور برای دانلود محتوای بازی ها استفاده می شود">
             <div class="k">سرور دانلود</div>
             <div class="v green" id="download_server">استیم دی‌ال</div>
@@ -84,20 +79,6 @@
       <!-- Toggles -->
       <section class="card flex-card" aria-label="تنظیمات">
         <div class="toggles">
-          <!-- ضد تحریم -->
-          <div class="toggle" data-title="فقط برای ورود به لانچر استفاده می شود و تاثیری روی دانلود ندارد">
-            <div class="left">
-              <div class="name">ضد تحریم</div>
-            </div>
-            <div class="anti-controls">
-              <select name="dns_select" id="dns_select" class="select select-compact" aria-label="انتخاب DNS ضد تحریم">
-                <option value="automatic">خودکار</option>
-                <option value="__add_new__">افزودن</option>
-              </select>
-              <button class="chip" id="edit_dns_button" type="button" aria-label="ویرایش DNS" style="display:none;">⚙</button>
-            </div>
-          </div>
-
           <div class="toggle" data-title="نسخه بتا ممکن است مشکلاتی داشته باشد.">
             <div class="left">
               <div class="name">به‌روزرسانی</div>
@@ -151,43 +132,6 @@
 
     </div>
   </main>
-
-  <!-- DNS Modal -->
-  <div class="overlay" id="dns_modal" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true" aria-label="تنظیم DNS">
-      <div class="modal-head">
-        <div class="modal-title" id="modal_title">تنظیم DNS</div>
-        <button class="icon-btn" id="modal_close" aria-label="بستن">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        </button>
-      </div>
-
-      <div class="modal-body">
-        <input type="hidden" id="dns_edit_mode" value="add">
-        <input type="hidden" id="dns_old_name" value="">
-
-        <div class="field">
-          <label for="dns_persian_name">نام سرور</label>
-          <input type="text" id="dns_persian_name" placeholder="مثلاً سرور شخصی ۱" />
-        </div>
-
-        <div class="field">
-          <label for="dns_primary_ip">آی‌پی سرور DNS</label>
-          <input type="text" id="dns_primary_ip" inputmode="decimal" placeholder="مثلاً 1.1.1.1" />
-        </div>
-
-        <div id="dns_message" class="dns-message"></div>
-
-        <div class="modal-actions">
-          <button class="btn secondary" id="dns_save_btn" type="button">ذخیره</button>
-          <button class="btn danger" id="dns_delete_btn" type="button" style="display:none;">حذف</button>
-          <button class="btn" id="dns_cancel_btn" type="button">انصراف</button>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- Help Modal -->
   <div class="overlay" id="helpOverlay" aria-hidden="true">

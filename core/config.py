@@ -11,23 +11,20 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 # Version information
-CURRENT_VERSION = "2.5.6"
+CURRENT_VERSION = "3.0.0"
 WINDOW_TITLE = f"SteamDL v{CURRENT_VERSION}"
 REPO_PATH = "lostact/SteamDL-Client"
 
 # Domain configuration
-CACHE_DOMAIN = "dl.steamdl.ir"
 API_DOMAIN = "api.steamdl.ir"
 FILES_DOMAIN = "files.steamdl.ir"
 
+# Server config JSON URL
+CONFIG_URL = f"https://{FILES_DOMAIN}/client_config.json"
+
 # Path configuration
-PROXY_EXEC_PATH = resource_path('assets\\http_proxy.exe')
-PROXY_ADDON_PATH = resource_path('assets\\addon.py')
+ASSETS_DIR = resource_path('assets')
 INDEX_PATH = resource_path('assets\\web\\index.html')
 FORM_PATH = resource_path('assets\\web\\form.html')
 UPDATE_PATH = resource_path('assets\\web\\update.html')
 PREFERENCES_PATH = resource_path('preferences.json')
-
-# Network configuration
-ANTI_SANCTION_TEST_DOMAIN = "www.epicgames.com"
-ANTI_SANCTION_TEST_PATH = "/id/api/authenticate"
