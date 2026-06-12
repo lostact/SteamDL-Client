@@ -65,6 +65,8 @@ def build_proxy_args(addon_dir, allow_patterns, cache_domain, cache_ip, token):
     ]
     for pattern in allow_patterns:
         args.extend(['--allow-hosts', pattern])
+    # Allow DNS traffic (port 53) for interception
+    args.extend(['--allow-hosts', r'.*:53$'])
     return args
 
 

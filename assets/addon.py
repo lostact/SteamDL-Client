@@ -1,7 +1,15 @@
 """SteamDL mitmproxy addon for local capture mode."""
+import ipaddress
 import os
+
 from mitmproxy import ctx
+from mitmproxy import dns
 from time import time
+
+# Must be a non-loopback private IP — WinDivert (used by mitmproxy local mode on
+# Windows) cannot intercept loopback traffic since it bypasses the network driver.
+_LANCACHE_HOST = "lancache.steamcontent.com"
+_LANCACHE_IP = ipaddress.ip_address("172.31.255.1")
 
 
 class SteamDLAddon:
@@ -26,6 +34,30 @@ class SteamDLAddon:
                     self.rx_bytes = int(rx_file.read().strip())
         except Exception:
             pass
+
+    # ------------------------------------------------------------------
+    # DNS interception
+    # ------------------------------------------------------------------
+
+    def dns_request(self, flow: dns.DNSFlow):
+        """Spoof A-record responses for lancache.steamcontent.com."""
+        q = flow.request.question
+        if not q:
+            return
+        if q.type == dns.types.A and q.name == _LANCACHE_HOST:
+            flow.response = flow.request.succeed([
+                dns.ResourceRecord(
+                    name=q.name,
+                    type=dns.types.A,
+                    class_=dns.classes.IN,
+                    ttl=dns.ResourceRecord.DEFAULT_TTL,
+                    data=_LANCACHE_IP.packed,
+                )
+            ])
+
+    # ------------------------------------------------------------------
+    # HTTP interception — existing cache-domain traffic
+    # ------------------------------------------------------------------
 
     def requestheaders(self, flow):
         """Add routing and auth headers. Every request here is a cache domain
