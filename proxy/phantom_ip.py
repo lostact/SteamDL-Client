@@ -9,6 +9,8 @@ as a LAN address for content-cache detection.
 import logging
 import subprocess
 
+from core.utils import run_cmd
+
 PHANTOM_IP = "10.255.255.1"
 LOOPBACK_INTERFACE = "Loopback"
 
@@ -20,21 +22,23 @@ def setup_phantom_ip():
     before adding it.
     """
     try:
-        result = subprocess.run(
-            ["netsh", "interface", "ip", "show", "addresses", LOOPBACK_INTERFACE],
-            capture_output=True, text=True
+        result = run_cmd(
+            ["netsh", "interface", "ip", "show", "addresses", LOOPBACK_INTERFACE]
         )
         if PHANTOM_IP in result.stdout:
             logging.info(f"Phantom IP {PHANTOM_IP} already exists on {LOOPBACK_INTERFACE}")
             return
 
-        subprocess.run(
+        result = run_cmd(
             [
                 "netsh", "interface", "ip", "add", "address",
                 LOOPBACK_INTERFACE, PHANTOM_IP, "255.255.255.255"
-            ],
-            check=True
+            ]
         )
+        if result.returncode != 0:
+            raise subprocess.CalledProcessError(
+                result.returncode, "netsh", result.stdout, result.stderr
+            )
         logging.info(f"Added phantom IP {PHANTOM_IP} to {LOOPBACK_INTERFACE}")
     except subprocess.CalledProcessError as e:
         logging.error(f"Failed to setup phantom IP: {e}")
@@ -50,12 +54,11 @@ def teardown_phantom_ip():
     Does not raise if the address is already removed.
     """
     try:
-        subprocess.run(
+        run_cmd(
             [
                 "netsh", "interface", "ip", "delete", "address",
                 LOOPBACK_INTERFACE, PHANTOM_IP
-            ],
-            check=False
+            ]
         )
         logging.info(f"Removed phantom IP {PHANTOM_IP} from {LOOPBACK_INTERFACE}")
     except Exception as e:
