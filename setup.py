@@ -4,8 +4,7 @@ from core.config import CURRENT_VERSION
 build_exe_options = {
     "build_exe": "dist/steamdl",
     "include_files": ["assets", "MicrosoftEdgeWebview2Setup.exe"],
-    "excludes": ["tkinter", "PyQt5", "webview.platforms.android", "webview.platforms.cocoa", "mitmproxy.addons.proxyauth","mitmproxy.tools.web","setuptools"],
-    "includes": ["mitmproxy_windows"],
+    "excludes": ["tkinter", "PyQt5", "webview.platforms.android", "webview.platforms.cocoa", "setuptools"],
     "include_msvcr": True,
     "replace_paths": [("*", "")]
 }

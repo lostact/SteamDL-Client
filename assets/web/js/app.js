@@ -62,7 +62,7 @@ window.addEventListener('pywebviewready', function () {
   });
 
   check_traffic();
-  setInterval(check_traffic, 2001);
+  setInterval(check_traffic, 500);
 
   const status_translation = { "active": "اشتراک فعال", "expired": "اشتراک منقضی شده" };
   pywebview.api.get_user_data().then(function (user_data) {

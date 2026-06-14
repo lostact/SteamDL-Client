@@ -7,9 +7,9 @@ import threading
 import requests
 from .config import (
     API_DOMAIN, CONFIG_URL, PREFERENCES_PATH,
-    INDEX_PATH, ASSETS_DIR
+    INDEX_PATH
 )
-from .proxy import build_proxy_args, create_proxy_process, build_allow_host_patterns
+from .proxy import create_proxy_manager
 from .utils import (
     is_in_startup, add_to_startup, remove_from_startup
 )
@@ -25,10 +25,10 @@ class Api:
         self._cache_ip = None
         self._server_config = None
 
-        self._proxy_process = None
+        self._proxy_manager = None
         self._running = None
         self._health_check_thread = None
-        self._preferences = {"auto_connect": False, "update": "latest"}
+        self._preferences = {"auto_connect": False, "update": "latest", "debug": False}
         self.load_preferences()
 
     def load_preferences(self):
@@ -131,9 +131,10 @@ class Api:
             self._running = False
             logging.info("Stopping Proxy...")
             try:
-                self._proxy_process.terminate()
+                self._proxy_manager.stop()
             except Exception as e:
                 logging.error(f"Failed to stop proxy: {e}")
+            self._proxy_manager = None
             logging.info("Service stopped successfully.")
         else:
             # --- START ---
@@ -144,22 +145,13 @@ class Api:
                     logging.error("Cannot start: server config fetch failed")
                     return
 
-                cache_domain = config["cache_domain"]
                 cache_ip = self._cache_ip
-                token = self._token
-                domains = config.get("domains", [])
 
-                # Build allow-hosts patterns (HTTPS blocking encoded here)
-                allow_patterns = build_allow_host_patterns(domains)
-
-                # Build and start proxy — cache_domain, cache_ip, token
-                # are passed to addon via --set custom options (no config file)
-                proxy_args = build_proxy_args(
-                    ASSETS_DIR, allow_patterns,
-                    cache_domain, cache_ip, token
+                self._proxy_manager = create_proxy_manager(
+                    config, self._token,
+                    debug=self._preferences.get("debug", False),
                 )
-                self._proxy_process = create_proxy_process(proxy_args)
-                self._proxy_process.start()
+                self._proxy_manager.start()
             except Exception as e:
                 logging.error(f"Failed to start Proxy: {e}")
                 return
@@ -181,8 +173,8 @@ class Api:
     def health_check(self):
         """Health check for running services"""
         while self._running:
-            if not self._proxy_process.is_alive():
-                logging.info("Proxy process is not running, switching off...")
+            if not self._proxy_manager.is_alive():
+                logging.info("Proxy is not running, switching off...")
                 running = False
             else:
                 running = True
