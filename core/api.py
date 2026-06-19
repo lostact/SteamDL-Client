@@ -183,10 +183,12 @@ class Api:
                 self._window.evaluate_js("$('#power_button').addClass('disabled')")
                 self.toggle_proxy()
                 self._window.evaluate_js("$('#power_button').removeClass('on')")
+                self._window.evaluate_js("$('#statusText').text('خاموش').removeClass('status-on status-changing').addClass('status-off')")
                 if self._preferences["auto_connect"]:
                     success = self.toggle_proxy()
                     if success:
                         self._window.evaluate_js("$('#power_button').addClass('on')")
+                        self._window.evaluate_js("$('#statusText').text('روشن').removeClass('status-off status-changing').addClass('status-on')")
                 self._window.evaluate_js("$('#power_button').removeClass('disabled')")
                 break
             time.sleep(5)
