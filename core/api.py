@@ -9,7 +9,7 @@ from .config import (
     API_DOMAIN, CONFIG_URL, PREFERENCES_PATH,
     INDEX_PATH
 )
-from .proxy import create_proxy_manager
+from proxy.manager import ProxyManager
 from .utils import (
     is_in_startup, add_to_startup, remove_from_startup
 )
@@ -152,7 +152,7 @@ class Api:
 
                 cache_ip = self._cache_ip
 
-                self._proxy_manager = create_proxy_manager(
+                self._proxy_manager = ProxyManager(
                     config, self._token,
                     debug=self._preferences.get("debug", False),
                 )
