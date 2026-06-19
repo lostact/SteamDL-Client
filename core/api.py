@@ -28,6 +28,7 @@ class Api:
         self._proxy_manager = None
         self._running = None
         self._health_check_thread = None
+        self._update_cancel_event = None
         self._preferences = {"auto_connect": False, "update": "latest", "debug": False}
         self.load_preferences()
         self.fetch_server_config()
@@ -218,7 +219,9 @@ class Api:
         self._window.minimize()
 
     def close(self):
-        """Close window"""
+        """Close window and cancel any running update"""
+        if self._update_cancel_event:
+            self._update_cancel_event.set()
         self._window.destroy()
 
     def get_version(self):

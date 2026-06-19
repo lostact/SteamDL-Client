@@ -3,6 +3,7 @@ import os
 import subprocess
 import logging
 import requests
+import threading
 from .config import CURRENT_VERSION, REPO_PATH
 
 def _parse_version(v):
@@ -65,9 +66,16 @@ def check_for_update(beta=False, mirror_config=None):
 
     return False, None
 
-def apply_update(download_url, progress_callback):
-    """Download and apply update"""
+def apply_update(download_url, progress_callback, cancel_event=None):
+    """Download and apply update.
+    
+    Args:
+        download_url: URL to download the update from
+        progress_callback: Callback function for progress updates
+        cancel_event: Optional threading.Event to signal cancellation
+    """
     installer_name = "steamdl_installer.msi"
+    installer_path = None
     try:
         response = requests.get(download_url, allow_redirects=True, stream=True, timeout=10)
         response.raise_for_status()
@@ -80,11 +88,17 @@ def apply_update(download_url, progress_callback):
             logging.info(f"Downloading update to {installer_path}")
             with open(installer_path, "wb") as installer_file:
                 for chunk in response.iter_content(chunk_size=8192):
+                    if cancel_event and cancel_event.is_set():
+                        logging.info("Update cancelled by user.")
+                        return None
                     if chunk:
                         downloaded_size += len(chunk)
                         installer_file.write(chunk)
                         done_percent = int(100 * downloaded_size / total_size)
                         progress_callback(done_percent)
+            if cancel_event and cancel_event.is_set():
+                logging.info("Update cancelled by user after download completed.")
+                return None
             logging.info("Downloading update finished.")
             subprocess.Popen(["msiexec", "/i", installer_path, "/q"], close_fds=True, creationflags=subprocess.DETACHED_PROCESS|subprocess.CREATE_NEW_PROCESS_GROUP)
             os._exit(0)

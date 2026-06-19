@@ -45,22 +45,26 @@ def main():
         update_available, download_url = check_for_update(beta, mirror_config=mirror_config)
         if update_available:
             updating = True
+            cancel_event = threading.Event()
             
             def progress_callback(progress):
                 window.evaluate_js(f'updateProgress({progress})')
 
-            update_thread = threading.Thread(target=apply_update, args=(download_url, progress_callback))
+            update_thread = threading.Thread(target=apply_update, args=(download_url, progress_callback, cancel_event))
+            update_thread.daemon = True
             update_thread.start()
 
             window = webview.create_window(
                 WINDOW_TITLE,
                 UPDATE_PATH,
                 width=300,
-                height=250,
+                height=260,
                 js_api=api,
                 frameless=True,
                 background_color='#f6f7fb'
             )
+            api.set_window(window)
+            api._update_cancel_event = cancel_event
 
     if not updating:
         # Clean up old installer
