@@ -11,6 +11,12 @@
       document.documentElement.classList.add('dark');
       document.addEventListener('DOMContentLoaded', () => document.body.classList.add('dark'));
     }
+    // Counter Windows accessibility text scaling (WebView2 applies it as page zoom)
+    (function () {
+      var W = 300;
+      var r = window.innerWidth / W;
+      if (r > 0 && r < 0.99) document.documentElement.style.zoom = r;
+    })();
   </script>
 </head>
 <body>
