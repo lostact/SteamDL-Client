@@ -30,6 +30,7 @@ class Api:
         self._health_check_thread = None
         self._preferences = {"auto_connect": False, "update": "latest", "debug": False}
         self.load_preferences()
+        self.fetch_server_config()
 
     def load_preferences(self):
         """Load preferences from file"""
@@ -68,17 +69,20 @@ class Api:
         """Remove application from startup"""
         return remove_from_startup()
 
-    def fetch_server_config(self):
+    def fetch_server_config(self, retries=3):
         """Fetch server configuration including domain patterns."""
-        try:
-            response = requests.get(CONFIG_URL, timeout=10)
-            response.raise_for_status()
-            self._server_config = response.json()
-            self._cache_ip = self._server_config.get("cache_ip")
-            return self._server_config
-        except Exception as e:
-            logging.error(f"Failed to fetch server config: {e}")
-            return None
+        for attempt in range(1, retries + 1):
+            try:
+                response = requests.get(CONFIG_URL, timeout=5)
+                response.raise_for_status()
+                self._server_config = response.json()
+                self._cache_ip = self._server_config.get("cache_ip")
+                return self._server_config
+            except Exception as e:
+                logging.error(f"Failed to fetch server config (attempt {attempt}/{retries}): {e}")
+                if attempt < retries:
+                    time.sleep(2)
+        return None
 
     def change_update_option(self, update_option):
         """Change update option"""
@@ -140,10 +144,10 @@ class Api:
             # --- START ---
             logging.info("Starting Proxy...")
             try:
-                config = self.fetch_server_config()
-                if not config:
-                    logging.error("Cannot start: server config fetch failed")
+                if not self._server_config:
+                    logging.error("Cannot start: server config not available")
                     return
+                config = self._server_config
 
                 cache_ip = self._cache_ip
 

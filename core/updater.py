@@ -9,7 +9,7 @@ def check_for_update(beta=False):
     """Check if a new version is available"""
     try:
         url = f"https://api.github.com/repos/{REPO_PATH}/releases"
-        response = requests.get(url, timeout=10)
+        response = requests.get(url, timeout=5)
         releases = response.json()
         for release in releases:
             if not release["prerelease"] or beta:
