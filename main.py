@@ -41,7 +41,8 @@ def main():
     updating = False
     if api._preferences["update"] != "off":
         beta = api._preferences["update"] == "beta"
-        update_available, download_url = check_for_update(beta)
+        mirror_config = (api._server_config or {}).get("update")
+        update_available, download_url = check_for_update(beta, mirror_config=mirror_config)
         if update_available:
             updating = True
             

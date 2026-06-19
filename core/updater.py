@@ -5,8 +5,19 @@ import logging
 import requests
 from .config import CURRENT_VERSION, REPO_PATH
 
-def check_for_update(beta=False):
-    """Check if a new version is available"""
+def _parse_version(v):
+    """Parse a version string like '3.1.6' or '3.2.0-beta.1' into a comparable tuple."""
+    # Strip pre-release suffix (e.g. "-beta.1") for numeric comparison
+    base = v.lstrip("v").split("-")[0]
+    return tuple(map(int, base.split(".")))
+
+def check_for_update(beta=False, mirror_config=None):
+    """Check if a new version is available.
+
+    Tries the GitHub Releases API first. If that fails (e.g. connectivity
+    issues), falls back to the mirror config fetched from client_config.json.
+    """
+    # --- 1. Try GitHub ---
     try:
         url = f"https://api.github.com/repos/{REPO_PATH}/releases"
         response = requests.get(url, timeout=5)
@@ -21,12 +32,36 @@ def check_for_update(beta=False):
                         break
                 break
 
-        current_tuple, latest_tuple = tuple(map(int, (CURRENT_VERSION.split(".")))), tuple(map(int, (latest_version.split("."))))
+        current_tuple = _parse_version(CURRENT_VERSION)
+        latest_tuple = _parse_version(latest_version)
         logging.info("current version: " + CURRENT_VERSION + " - latest version: " + latest_version)
         if latest_tuple and latest_tuple > current_tuple and download_url:
             return True, download_url
+        return False, None
     except Exception as e:
-        logging.info(f"Failed to check for update: {e}")
+        logging.info(f"GitHub update check failed: {e}")
+
+    # --- 2. Fallback to mirror ---
+    if not mirror_config:
+        return False, None
+
+    try:
+        channel = mirror_config.get("beta") if beta and "beta" in mirror_config else mirror_config.get("stable")
+        if not channel:
+            return False, None
+
+        mirror_version = channel.get("version")
+        mirror_url = channel.get("download_url")
+        if not mirror_version or not mirror_url:
+            return False, None
+
+        current_tuple = _parse_version(CURRENT_VERSION)
+        mirror_tuple = _parse_version(mirror_version)
+        logging.info(f"Mirror update check: current={CURRENT_VERSION}, mirror={mirror_version}")
+        if mirror_tuple > current_tuple:
+            return True, mirror_url
+    except Exception as e:
+        logging.error(f"Mirror update check failed: {e}")
 
     return False, None
 
