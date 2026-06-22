@@ -173,8 +173,11 @@ class ProxyManager:
             proxy_logger.propagate = False  # don't duplicate into app.log
 
         # 1. Compile patterns
-        domain_patterns, _ = compile_patterns(self.domains)
-        logger.info(f"Compiled {len(domain_patterns)} domain patterns")
+        domain_patterns, block_https_patterns = compile_patterns(self.domains)
+        logger.info(
+            f"Compiled {len(domain_patterns)} domain patterns "
+            f"({len(block_https_patterns)} with block_https)"
+        )
 
         # 2. Setup phantom IP
         setup_phantom_ip()
@@ -193,6 +196,7 @@ class ProxyManager:
             cache_ip=self.cache_ip,
             cache_domain=self.cache_domain,
             token=self.token,
+            block_https_patterns=block_https_patterns,
             debug=self.debug,
         )
 

@@ -17,7 +17,10 @@ each request are processed in Python.
 import asyncio
 import logging
 import os
+import struct
 from time import time
+
+from .patterns import matches_any
 
 logger = logging.getLogger(__name__)
 
@@ -47,11 +50,13 @@ class TransparentProxy:
                       TLS connection at INFO level.
     """
 
-    def __init__(self, listen_ip, cache_ip, cache_domain, token, debug=False):
+    def __init__(self, listen_ip, cache_ip, cache_domain, token,
+                 block_https_patterns=None, debug=False):
         self.listen_ip = listen_ip
         self.cache_ip = cache_ip
         self.cache_domain = cache_domain
         self.token = token
+        self.block_https_patterns = block_https_patterns or []
         self.debug = debug
         self.total_rx = 0
         self._server_80 = None
@@ -339,13 +344,34 @@ class TransparentProxy:
     # ------------------------------------------------------------------
 
     async def _handle_tls_passthrough(self, client_reader, client_writer):
-        """Raw TCP passthrough: phantom_ip:443 → cache_ip:443.
+        """TLS passthrough with optional SNI-based blocking.
 
-        No header inspection or modification — bytes are relayed as-is.
+        Reads the TLS Client Hello to extract the SNI hostname. If the
+        SNI matches a domain with ``block_https: true`` in the server
+        config, the connection is dropped immediately. Otherwise, bytes
+        are relayed as-is to ``cache_ip:443``.
         """
+        peer = client_writer.get_extra_info("peername")
+        peer_addr = f"{peer[0]}:{peer[1]}" if peer else "unknown"
+
+        # ── Peek at the TLS Client Hello for SNI inspection ──────────
+        initial_buf = b""
+        sni = None
+        if self.block_https_patterns:
+            initial_buf, sni = await self._read_client_hello(client_reader)
+            if sni and matches_any(sni, self.block_https_patterns):
+                logger.debug(
+                    f"TLS BLOCKED: {peer_addr} -> SNI={sni} (block_https)"
+                )
+                client_writer.close()
+                return
+
         if self.debug:
-            peer = client_writer.get_extra_info("peername")
-            logger.info(f"[DEBUG] TLS passthrough: {peer[0]}:{peer[1]} -> {self.cache_ip}:443")
+            logger.info(
+                f"[DEBUG] TLS passthrough: {peer_addr} -> {self.cache_ip}:443"
+                f"{' (SNI=' + sni + ')' if sni else ''}"
+            )
+
         try:
             try:
                 upstream_reader, upstream_writer = await asyncio.wait_for(
@@ -356,6 +382,11 @@ class TransparentProxy:
                 logger.debug(f"Failed to connect to upstream {self.cache_ip}:443: {e}")
                 client_writer.close()
                 return
+
+            # Forward the buffered Client Hello bytes to upstream first
+            if initial_buf:
+                upstream_writer.write(initial_buf)
+                await upstream_writer.drain()
 
             relay_down = asyncio.ensure_future(
                 self._relay(client_reader, upstream_writer)
@@ -388,6 +419,196 @@ class TransparentProxy:
                 client_writer.close()
             except Exception:
                 pass
+
+    # ------------------------------------------------------------------
+    # TLS Client Hello parsing
+    # ------------------------------------------------------------------
+
+    async def _read_client_hello(self, reader):
+        """Read a TLS Client Hello record and extract the SNI hostname.
+
+        Reads just enough bytes to parse the full Client Hello message.
+        Returns the complete raw bytes (to be forwarded upstream) and
+        the extracted SNI hostname (or ``None``).
+
+        Returns:
+            Tuple of (raw_bytes, sni_hostname).  ``raw_bytes`` contains
+            the full TLS record so it can be forwarded to upstream.
+            ``sni_hostname`` is the extracted SNI string or ``None`` if
+            parsing fails or no SNI extension is present.
+        """
+        try:
+            # Read TLS record header (5 bytes)
+            header = await self._read_exact(reader, 5)
+            if header is None:
+                return b"", None
+
+            content_type, version, record_length = struct.unpack(
+                "!BHH", header
+            )
+
+            # Only inspect Handshake records (0x16)
+            if content_type != 0x16:
+                buf = header
+                # Read the rest of the record to forward it
+                remaining = await self._read_exact(reader, record_length)
+                if remaining:
+                    buf += remaining
+                return buf, None
+
+            # Sanity check: TLS record length should be reasonable
+            if record_length > 16384 + 2048:  # max TLS record + margin
+                buf = header
+                remaining = await self._read_exact(reader, record_length)
+                if remaining:
+                    buf += remaining
+                return buf, None
+
+            # Read the full handshake message
+            handshake_data = await self._read_exact(reader, record_length)
+            if handshake_data is None:
+                return header, None
+
+            full_record = header + handshake_data
+            sni = self._extract_sni(handshake_data)
+            return full_record, sni
+
+        except Exception as e:
+            logger.debug(f"Error reading TLS Client Hello: {e}")
+            return b"", None
+
+    async def _read_exact(self, reader, n):
+        """Read exactly *n* bytes from *reader*, with a timeout.
+
+        Returns the bytes read, or ``None`` on EOF / timeout.
+        """
+        try:
+            buf = b""
+            while len(buf) < n:
+                chunk = await asyncio.wait_for(
+                    reader.read(n - len(buf)), timeout=10.0
+                )
+                if not chunk:
+                    return None
+                buf += chunk
+            return buf
+        except (asyncio.TimeoutError, ConnectionError):
+            return None
+
+    @staticmethod
+    def _extract_sni(handshake_data):
+        """Extract the SNI hostname from a TLS Handshake message.
+
+        Parses the Client Hello structure to find the SNI extension
+        (type 0x0000) and returns the first hostname entry.
+
+        Args:
+            handshake_data: Raw bytes of the TLS Handshake message
+                (starting after the 5-byte TLS record header).
+
+        Returns:
+            SNI hostname string, or ``None`` if not found.
+        """
+        try:
+            offset = 0
+
+            # Handshake header: type (1) + length (3)
+            if len(handshake_data) < 4:
+                return None
+            hs_type = handshake_data[0]
+            if hs_type != 0x01:  # Not a ClientHello
+                return None
+            hs_length = struct.unpack(
+                "!I", b"\x00" + handshake_data[1:4]
+            )[0]
+            offset = 4
+
+            # ClientHello: version (2) + random (32)
+            if offset + 34 > len(handshake_data):
+                return None
+            offset += 34  # skip version + random
+
+            # Session ID
+            if offset + 1 > len(handshake_data):
+                return None
+            session_id_len = handshake_data[offset]
+            offset += 1 + session_id_len
+
+            # Cipher Suites
+            if offset + 2 > len(handshake_data):
+                return None
+            cipher_suites_len = struct.unpack(
+                "!H", handshake_data[offset:offset + 2]
+            )[0]
+            offset += 2 + cipher_suites_len
+
+            # Compression Methods
+            if offset + 1 > len(handshake_data):
+                return None
+            comp_methods_len = handshake_data[offset]
+            offset += 1 + comp_methods_len
+
+            # Extensions
+            if offset + 2 > len(handshake_data):
+                return None
+            extensions_len = struct.unpack(
+                "!H", handshake_data[offset:offset + 2]
+            )[0]
+            offset += 2
+            extensions_end = offset + extensions_len
+
+            while offset + 4 <= extensions_end:
+                ext_type = struct.unpack(
+                    "!H", handshake_data[offset:offset + 2]
+                )[0]
+                ext_len = struct.unpack(
+                    "!H", handshake_data[offset + 2:offset + 4]
+                )[0]
+                offset += 4
+
+                if ext_type == 0x0000:  # SNI extension
+                    return TransparentProxy._parse_sni_extension(
+                        handshake_data[offset:offset + ext_len]
+                    )
+
+                offset += ext_len
+
+            return None
+
+        except Exception:
+            return None
+
+    @staticmethod
+    def _parse_sni_extension(data):
+        """Parse the SNI extension data and return the first hostname.
+
+        Args:
+            data: Raw bytes of the SNI extension value.
+
+        Returns:
+            Hostname string, or ``None``.
+        """
+        try:
+            if len(data) < 2:
+                return None
+            sni_list_len = struct.unpack("!H", data[0:2])[0]
+            offset = 2
+            end = min(2 + sni_list_len, len(data))
+
+            while offset + 3 <= end:
+                sni_type = data[offset]
+                sni_len = struct.unpack(
+                    "!H", data[offset + 1:offset + 3]
+                )[0]
+                offset += 3
+                if sni_type == 0x00:  # Hostname type
+                    hostname = data[offset:offset + sni_len]
+                    return hostname.decode("ascii", errors="replace")
+                offset += sni_len
+
+            return None
+        except Exception:
+            return None
 
     # ------------------------------------------------------------------
     # Shared helpers
