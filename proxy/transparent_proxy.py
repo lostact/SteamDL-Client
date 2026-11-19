@@ -655,6 +655,7 @@ class TransparentProxy:
         - Adds Host: cache_domain if no Host header was present.
         - Adds Real-Host preserving the original Host value.
         - Adds Auth-Token.
+        - Removes all User-Agent headers before forwarding to the cache server.
 
         Args:
             headers_raw: Raw HTTP header block bytes (including \\r\\n\\r\\n).
@@ -689,6 +690,8 @@ class TransparentProxy:
             host_replaced = False
             for i, line in enumerate(header_lines):
                 if not line:
+                    continue
+                if line.split(":", 1)[0].strip().lower() == "user-agent":
                     continue
                 if i == host_line_idx:
                     new_headers.append(f"Host: {self.cache_domain}")
